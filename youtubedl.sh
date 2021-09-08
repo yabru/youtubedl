@@ -1,6 +1,6 @@
 #!/bin/bash
-version="2.4.4"
-commit="ganre hulpage toegevoegd"
+version="2.4.45"
+commit="commit"
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
