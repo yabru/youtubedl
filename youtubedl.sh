@@ -1,6 +1,6 @@
 #!/bin/bash
-version="2.4.2"
-commit="juiste programmas toegevoegd"
+version="2.4.4"
+commit="ganre hulppage toegevoegd"
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -47,9 +47,10 @@ help () {
 	echo "-t	[TWEEDELIED](tijd)		als er meerdere liedjes in 1 video zitten. Geef aan waar de wissel in de video zit"
 	echo ""
 	echo ""
-	echo "metadata"
+	echo "metadata (audio)"
 	echo "-m	[MANIPULATIE] 			manipuleer de titel van de titel zodat het script denkt dat je input de titel is die hij dan verwerkt (handig voor -T)"
 	echo "-r	[ROTZOOI TITEL]			Voor min a, een titel zonder goede structuur"
+	echo "-g	[GENRE]					Zet voor de huidge download een andere genre voor de huidige download"
 	echo "-T	[THUMBNAIL] 			Genereerd zelf een thumbnail van een insta post via een url na argument (ondersteund: youtube_link insta_link jpg_bestand)"
 	echo "	[THUMBNAIL]			(\"youtubedl -T vid\" betekend dat hij de huidige thumbnail gebruik als foto \"youtubedl -T INSTA_URL|boven(of onder) sneidt hij af)"
 	echo ""
@@ -980,6 +981,9 @@ else
 				fi
 			fi
 			if [[ $prodintitel == "1" ]]; then
+				if [[ $engeneer == "@"* ]]; then
+					engeneer=`echo $engeneer|sed -e "s/@//"`
+				fi
 				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
 				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
 			else
