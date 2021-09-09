@@ -1,6 +1,6 @@
 #!/bin/bash
-version="2.4.4"
-commit="test"
+version="2.4.45"
+commit="belangerijke sed toegevoegd"
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -487,6 +487,7 @@ else
 			if [[ $hoeveeldrafmoet == "" ]]; then
 				hoeveeldrafmoet=0
 			fi
+			artiestnaam=`echo $artiestnaam|sed -e "s/ / /g"`
 			artiestnaamzonderemoji=`echo $artiestnaam|iconv -c -f utf8 -t ascii`
 			if [[ $artiestnaam != $artiestnaamzonderemoji ]]; then
 			#	hoeveeldrbijmoet=$(( 4 - hoeveeldrafmoet ))
@@ -495,6 +496,7 @@ else
 			#	hoeveeldrbijmoet=$(( 2 - hoeveeldrafmoet ))
 			fi
 			liedtitel=`echo $titel|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
+
 			#woordteller=`echo "$artiestnaam" |wc -c|tr  -d '[:blank:]'`
 			#woordteller=$(( woordteller + hoeveeldrbijmoet ))
 			#liedtitel=`echo ${titel:woordteller}`
