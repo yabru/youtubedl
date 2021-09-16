@@ -1,14 +1,15 @@
 #!/bin/bash
-version="2.4.45"
-commit="belangerijke sed toegevoegd"
+version="2.5"
+commit="Commando efficenter gemaakt door een andere methode toe te passen met $random"
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
-gshufiserniet=`gshuf --version &> /dev/null&&echo "1"`
-if [[ $gshufiserniet == "1" ]]; then
-	entries=($(gshuf -i 0-149 -n 15 | sort -n))
-	random=`echo "${entries[@]}"|sed -e 's/ //g'`
-fi
+random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
+#gshufiserniet=`gshuf --version &> /dev/null&&echo "1"`
+#if [[ $gshufiserniet == "1" ]]; then
+#	entries=($(gshuf -i 0-149 -n 15 | sort -n))
+#	random=`echo "${entries[@]}"|sed -e 's/ //g'`
+#fi
 toegang="0"
 vofa=v
 image="0"
