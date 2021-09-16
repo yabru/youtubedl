@@ -1,6 +1,6 @@
 #!/bin/bash
-version="2.5"
-commit="Commando efficenter gemaakt door een andere methode toe te passen met $random"
+version='2.5'
+commit='Commando efficenter gemaakt door een andere methode toe te passen met $random'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
