@@ -1,6 +1,6 @@
 #!/bin/bash
-version='2.5'
-commit='Commando efficenter gemaakt door een andere methode toe te passen met $random'
+version='2.5.3'
+commit='| metadata enorm verbeterd'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -522,6 +522,11 @@ else
 					fi
 				fi
 			fi
+			artiestnaam=`echo "$artiestnaam"|sed -e "s/|/ /g"`
+			artiestnaamtest=`echo "$artiestnaam"|sed -e "s/#[^ ]*/$random/g"`
+			if [[ $artiestnaamtest == "$random x $random"* ]]; then
+				artiestnaam=`echo "$artiestnaam"|sed -e "s/x/ /"`
+			fi
 			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"(" '{print NF-1}'` + 2 ))
 			n=1
 			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
@@ -983,6 +988,12 @@ else
 					genre=`cat ~/Documents/youtube-dl/.genre`	
 				fi
 			fi
+			if [[ $verbeterdartiest == "##"* ]]; then
+				verbeterdartiest=`echo $verbeterdartiest|sed -e "s/##/#/"`
+			fi
+			while [[ $verbeterdartiest == *"  "* ]]; do
+				verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
+			done
 			if [[ $prodintitel == "1" ]]; then
 				if [[ $engeneer == "@"* ]]; then
 					engeneer=`echo $engeneer|sed -e "s/@//"`
