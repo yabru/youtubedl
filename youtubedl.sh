@@ -185,8 +185,8 @@ update () {
 	git stash drop &> /dev/null
 	git pull
 	chmod 755 `realpath $0`
-	brew doctor &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
-	brewoutdatedlist=(`brew outdated|xargs`)
+	#brew doctor &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
+	brewoutdatedlist=(`brew outdated|xargs`)& while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	for t in ${tools[@]}; do
 		for f in ${brewoutdatedlist[@]}; do
 			if [[ $t == $f ]]; then
