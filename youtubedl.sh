@@ -1,6 +1,6 @@
 #!/bin/bash
-version='2.5.3'
-commit='| metadata enorm verbeterd'
+version='2.5.7'
+commit='algemene verbeteringen'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -409,7 +409,7 @@ else
 	#filenaamvooracc=`/usr/local/bin/youtube-dl $yourl -x --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random%(title)s.%(ext)s"`
 	#filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename`
 	random2=`echo $random|rev`
-	alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s"|awk 1 ORS="$random"`
+	alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
 	titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
 	filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
 	#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
@@ -443,7 +443,7 @@ else
 	fi
 	if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
 	then
-		echo -e "\n\n\n\nERROR: Geen geldig YouTube URL gevonden\n\n\nVoor meer hulp, [youtubedl -h]"
+		echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
 		exit 1
 	fi
 	if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een filenaam gekregen heeft
@@ -973,7 +973,7 @@ else
 				liedtitelzonderprod=$titel
 				verbeterdartiest=`echo $account|awk 'BEGIN {FS=" - "}{print $1}'`
 			fi
-			mv "$filenaamverbeterd" ~/Documents/youtube-dl/.tijdelijk.mp3
+			mv "$filenaamverbeterd" ~/Documents/youtube-dl/.tijdelijk.mp3 &> /dev/null
 			if [[ $genre == "" ]]; then		
 				ls ~/Documents/youtube-dl/.genre  &> /dev/null || noggeengenre=1
 				if [[ $noggeengenre == 1 ]]; then
@@ -1080,6 +1080,7 @@ else
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
+				echo -ne "\rThumbnail gegenereerd.                                            "
 			fi
 			if [[ $eindesec != "" ]]; then
 				if [[ $eindesec == *":"* ]]; then
@@ -1097,6 +1098,7 @@ else
 					eindesec=$(( eindemin * 60 + eindesec ))
 				fi
 				echtgedaan=0
+				echo ""
 				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
@@ -1110,6 +1112,7 @@ else
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
+				echo -ne "\rAudio bijgesneden                                            "
 			fi
 			minuut=0
 			sec=0
@@ -1162,6 +1165,7 @@ else
 					sectwee="$sec"
 				fi
 				echtgedaan=0
+				echo ""
 				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het splitten     "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					/bin/ls "$filenaamverbeterdpt1" &> /dev/null && rm "$filenaamverbeterdpt1" &> /dev/null
 					/bin/ls "$filenaamverbeterdpt2" &> /dev/null && rm "$filenaamverbeterdpt2" &> /dev/null
@@ -1182,6 +1186,7 @@ else
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
+				echo -ne "\rSplitten gedaan                                            "
 			fi
 			minuut=0
 			sec=""
@@ -1201,6 +1206,7 @@ else
 					fadeinsec=2
 				fi
 				echtgedaan=0
+				echo ""
 				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					if [[ $tweedelied != "" ]]; then
 						ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
@@ -1213,7 +1219,7 @@ else
 						sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
 						ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
 						rm "$filenaamverbeterdpt1" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"
+						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
 						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
 						rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 					else
@@ -1227,13 +1233,14 @@ else
 						sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
 						ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
 						rm "$filenaamverbeterd" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"
+						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
 						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
 						rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 					fi
 				touch ~/Documents/youtube-dl/.gedaan
-				sleep .2
+				sleep .3
 				rm ~/Documents/youtube-dl/.gedaan
+				echo -ne "\rAudio bijgesneden                                            "
 			fi
 		fi
 		if [[ "$vofa" == "v" ]]; then
@@ -1304,6 +1311,7 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 	fi
 fi
 sleep .2
+echo ""
 echo -ne "\r"
 if [[ trouble == 1 ]]; then
 	echo $typ
