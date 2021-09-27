@@ -1,6 +1,6 @@
 #!/bin/bash
-version='2.5.7'
-commit='algemene verbeteringen'
+version='2.5.8'
+commit='break ingesteld dat hij clean stopt'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -13,6 +13,7 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
+trap exit SIGINT
 locatie () {
 	/usr/local/bin/youtubedl -h &> /dev/null;exitcode=$?
 	if [[ $exitcode != 10 ]]; then
