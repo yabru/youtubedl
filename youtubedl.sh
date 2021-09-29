@@ -1,6 +1,6 @@
 #!/bin/bash
-version='2.5.8'
-commit='break ingesteld dat hij clean stopt'
+version='2.7.4'
+commit='Nieuwe -y funtie toegevoegd (kijk in -h voor hulp)'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -40,6 +40,7 @@ help () {
 	echo ""
 	echo "NOODZAAKELIJK:"
 	echo "-u	[URL]				Voor het invoegen YouTube url (heeft een URL na -u nodig)"
+	echo "-y	[URL BESTAND]		Haald de url uit bestanden die eerder zijn gedownload."
 	echo ""
 	echo ""
 	echo ""
@@ -289,7 +290,7 @@ mint () {
 		instaurl="vid"
 	fi
 }
-while getopts u:haridfobs:e:t:UTm:g:v flag;
+while getopts u:haridfobs:e:t:UTm:g:vy: flag;
 do
 	case "${flag}" in
 	u)			yourl=${OPTARG};;
@@ -317,6 +318,8 @@ do
 	t)			tweedelied=${OPTARG};;
 
 	g)			genre=${OPTARG};;
+
+	y)			algedaanvidpad=${OPTARG};;
 
 	T)			
 				eval nextopt=\${$OPTIND}
@@ -346,6 +349,13 @@ if [[ $versioncheck == 1 ]]; then
 fi
 toolscheck
 locatie
+if [[ $algedaanvidpad != "" ]]; then
+	ls "$algedaanvidpad" &> /dev/null && gehaald=1
+	if [[ $gehaald == 1 ]]; then
+		yourl=`exiftool "$algedaanvidpad"|grep URL`
+		yourl=`echo ${yourl:40}`
+	fi
+fi
 if  [[ "$yourl" == "" ]]; then
 	toegang="0"
 	help
@@ -498,7 +508,6 @@ else
 			#	hoeveeldrbijmoet=$(( 2 - hoeveeldrafmoet ))
 			fi
 			liedtitel=`echo $titel|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
-
 			#woordteller=`echo "$artiestnaam" |wc -c|tr  -d '[:blank:]'`
 			#woordteller=$(( woordteller + hoeveeldrbijmoet ))
 			#liedtitel=`echo ${titel:woordteller}`
@@ -1250,7 +1259,16 @@ else
 			if [[ $typ == ".mp4" ]]; then
 				filenaamverbeterd=`echo "$filenaamverbeterd"|rev|sed -e "s/4pm.//"|rev`
 			fi
-			/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir ; /usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
+			/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
+			#if [[ $filenaamverbeterd != *".mp4" ]]; then
+			#	filenaamverbeterd=`echo "$filenaamverbeterd.mp4"`
+			#fi
+			#ffmpeg -i "/Users/$USER/Documents/youtube-dl_video/file.jpg" ~/Documents/youtube-dl_video/file.jpg &> /dev/null
+			#rm "$filenaamverbeterd"
+			#ffmpeg -i ~/Documents/youtube-dl_video/outfile.mp4 -metadata URL="$yourl" -c copy "$filenaamverbeterd"
+			#eyeD3 --add-image="/Users/$USER/Documents/youtube-dl_video/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+			#rm ~/Documents/youtube-dl_video/outfile.mp4
+			#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd"
 		fi
 	fi
 fi
