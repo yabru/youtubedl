@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.0.0'
-commit='extreem grote verbetering van intern script structuur en makkelijker hangende download opstarten'
+version='3.0.3'
+commit='verbeterde structuur'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -891,9 +891,6 @@ else
 						verbeterdartiest=`echo "$eerstewoordhekje $allerlaatstewoord $groepzondereersteenlaatstehekje"`
 						echo $verbeterdartiest
 					fi
-					#laatstepersoonengroepcorrectrev=`echo "$laatstepersoonengroepcorrect" "$allerlaatstewoord"|rev`
-					#laatstepersoonengroepincorrectrev=`echo $persoonlijstrev|awk 'BEGIN {FS=" x "}{print $1}'`
-					#verbeterdartiest=`echo $persoonlijstrev|sed -e "s/$laatstepersoonengroepincorrectrev/$laatstepersoonengroepcorrectrev/"|rev`	
 				else
 					verbeterdartiest=$persoonlijst	
 				fi
@@ -1124,12 +1121,14 @@ else
 				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
-					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-					sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h 0 -0 "$fadeoutsec" &> /dev/null 
-					ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-					rm "$filenaamverbeterd" &> /dev/null
-					mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd" &> /dev/null
-					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+					if [[ $fadeoutsec != 0 ]]; then
+						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+						sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h 0 -0 "$fadeoutsec" &> /dev/null 
+						ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+						rm "$filenaamverbeterd" &> /dev/null
+						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd" &> /dev/null
+						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null	
+					fi
 					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .2
@@ -1236,13 +1235,15 @@ else
 						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
 						rm "$filenaamverbeterdpt1" &> /dev/null
 						rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-						avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null
-						ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-						ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-						rm "$filenaamverbeterdpt1" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+						avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
+						if [[ $fadeinsec != 0 ]]; then
+						 	ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+						 	sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+							ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+							rm "$filenaamverbeterdpt1" &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
+							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+						fi 
 						rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 					else
 						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
@@ -1251,12 +1252,14 @@ else
 						rm "$filenaamverbeterd" &> /dev/null
 						rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 						avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
-						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-						ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-						rm "$filenaamverbeterd" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+						if [[ $fadeinsec != 0 ]]; then
+							ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+							sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+							ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+							rm "$filenaamverbeterd" &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
+							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+						fi
 						rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 					fi
 				touch ~/Documents/youtube-dl/.gedaan
