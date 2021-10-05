@@ -1,6 +1,6 @@
 #!/bin/bash
-version='2.7.7'
-commit='filetype ondersteuning toegevoegd voor de custom thumbnail vanuit bestanden, jpeg en png'
+version='3.0.0'
+commit='extreem grote verbetering van intern script structuur en makkelijker hangende download opstarten'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -13,7 +13,6 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
-trap exit SIGINT
 locatie () {
 	/usr/local/bin/youtubedl -h &> /dev/null;exitcode=$?
 	if [[ $exitcode != 10 ]]; then
@@ -40,7 +39,7 @@ help () {
 	echo ""
 	echo "NOODZAAKELIJK:"
 	echo "-u	[URL]				Voor het invoegen YouTube url (heeft een URL na -u nodig)"
-	echo "-y	[URL BESTAND]		Haald de url uit bestanden die eerder zijn gedownload."
+	echo "-y	[URL BESTAND]			(vervanning voor -u) Haalt de url uit bestanden die eerder zijn gedownload. (pad nodig)"
 	echo ""
 	echo ""
 	echo ""
@@ -465,53 +464,63 @@ else
 		echo -e "Account:	$account\n\n"
 		if [[ "$vofa" == "a" ]]; then 
 			filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
-			/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
+			#sleep 10; ps -ef|grep youtube-[d]l; echo $?&> /dev/null && pkill python3; youtubedl "$@"
+			while true; do #[[ $allesgeregeld != 1 ]]; do
+				/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+				if [[ $goedgegaan == 1 ]]; then
+					break
+				else
+					echo "opniew proberen? (Y/n)"
+					read opniewproberen
+					if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then
+						filenaamverbeterdrm=`echo $filenaamverbeterd|rev|sed -e "s/3pm.//"|rev`
+						GLOBIGNORE=*.mp3
+						rm ''"$filenaamverbeterdrm"''*
+						unset GLOBIGNORE
+						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null||nietgelukt=1
+						if [[ $nietgelukt == 1 ]]; then
+							rm "$filenaamverbeterd"
+						else
+							rm ~/Documents/youtube-dl/file.jpg
+						fi
+						exit 1
+					#else
+						#youtube-dl --rm-cache-dir &> /dev/null
+					fi
+				fi
+			done
+			#/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio||echo "opniew proberen? (Y/n)"; read opniewproberen; if [[ $opniewproberen == "" ]]||[[ $opniewproberen == "y" ]]||[[ $opniewproberen == "Y" ]]; then youtubedl "$@";else exit; fi #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
+			trap exit SIGINT
 			if [[ $manueelinput != "" ]]; then
 				titel=$manueelinput
 			fi
-			artiestnaamvantitel=`echo "$titel"|awk 'BEGIN {FS=" - "}{print $1}'`
-			if [[ $artiestnaamvantitel == $titel ]]; then
-				artiestnaam=`echo "$titel"|awk 'BEGIN {FS="-"}{print $1}'`
-				if [[ $titel != *"- "* ]]; then #dus hij is artiest -lied of hij is artiest-lied
-					if [[ $titel != *" -"* ]]; then #dus hij is artiest-lied
-						liedseperator="-"
-						hoeveeldrafmoet=2
-					else #dus hij is artiest -lied
-						liedseperator=" -"
-						hoeveeldrafmoet=3
-					fi
-				fi
-				if [[ $hoeveeldrafmoet == "" ]]; then
-					liedseperator="- "
-					hoeveeldrafmoet=1
-				fi
-			else
-				artiestnaam="$artiestnaamvantitel"
+			if [[ $titel == *" - "* ]]; then
 				liedseperator=" - "
+			fi
+			if [[ $liedseperator == "" ]]&&[[ $titel == *"- "* ]]; then
+				liedseperator="- "
+			fi
+			if [[ $liedseperator == "" ]]&&[[ $titel == *" -"* ]]; then
+				liedseperator=" -"
+			fi
+			if [[ $liedseperator == "" ]]&&[[ $titel == *"-"* ]]; then
+				liedseperator="-"–-
 			fi
 			if [[ $liedseperator == "" ]]; then
-				liedseperator=" - "
+				liedseperatornietgevonden=1
+			else
+				artiestnaam=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
+				artiestnaam=`echo "$artiestnaam"|sed -e "s/ / /g"`
+				artiestnaam=`echo "$artiestnaam"|iconv -c -f utf8 -t ascii`
+				liedtitel=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
 			fi
-			artiestnaam=`echo $titel|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
-			if [[ `echo $artiestnaam|wc -c` == `echo $titel|wc -c` ]]; then
+			if [[ `echo "$artiestnaam"|wc -c` == `echo "$titel"|wc -c` ]]; then
 				artiestnaam=`echo "$titel"|awk 'BEGIN {FS=" – "}{print $1}'`
 			fi
 			if [[ $hoeveeldrafmoet == "" ]]; then
 				hoeveeldrafmoet=0
 			fi
-			artiestnaam=`echo $artiestnaam|sed -e "s/ / /g"`
-			artiestnaamzonderemoji=`echo $artiestnaam|iconv -c -f utf8 -t ascii`
-			if [[ $artiestnaam != $artiestnaamzonderemoji ]]; then
-			#	hoeveeldrbijmoet=$(( 4 - hoeveeldrafmoet ))
-				artiestnaam=`echo $artiestnaamzonderemoji`
-			#else
-			#	hoeveeldrbijmoet=$(( 2 - hoeveeldrafmoet ))
-			fi
-			liedtitel=`echo $titel|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
-			#woordteller=`echo "$artiestnaam" |wc -c|tr  -d '[:blank:]'`
-			#woordteller=$(( woordteller + hoeveeldrbijmoet ))
-			#liedtitel=`echo ${titel:woordteller}`
-			if [[ $artiestnaam == $titel ]]; then
+			if [[ $liedseperatornietgevonden == 1 ]]; then
 				if [[ $titel == *" | "* ]]; then
 					artiestnaammisschien=`echo "$titel"|awk 'BEGIN {FS="|"}{print $1}'`
 					woordtellerlied=`echo "$artiestnaammisschien" |wc -c|tr  -d '[:blank:]'`
@@ -530,7 +539,10 @@ else
 							echo "Geen geldig teken herkend, ga uit van (2) Nee"
 						fi
 					fi
-				fi
+				fi	
+			fi
+			if [[ $liedtitel == "("* ]]; then
+				liedtitel=`echo $liedtitel|sed -e "s/(//"|sed -e "s/)//"`
 			fi
 			artiestnaam=`echo "$artiestnaam"|sed -e "s/|/ /g"`
 			artiestnaamtest=`echo "$artiestnaam"|sed -e "s/#[^ ]*/$random/g"`
@@ -762,7 +774,7 @@ else
 			fi
 			if [[ $liedtitelzonderprod == "#"* ]]; then
 				hoeveelx=`echo $liedtitelzonderprod| awk -F"#" '{print NF-1}'`
-				liedtitelzonderprod=`echo "$liedtitelzonderprod"|rev|awk 'BEGIN {FS="#"}{print $"'$hoeveelx'"}'|rev`
+				liedtitelzonderprod=`echo "$liedtitelzonderprod"|rev|awk 'BEGIN {FS="#"}{print $"'$hoeveelx'"}'|rev` #voor als iemand ook nog een ander hekje heeft die we niet moeten hebben
 				liedtitelzonderprod=`echo "#$liedtitelzonderprod"`
 			fi
 			if [[ $liedtitelzonderprod == "\""* ]]; then
