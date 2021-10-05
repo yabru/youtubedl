@@ -1,6 +1,6 @@
 #!/bin/bash
-version='2.7.4'
-commit='Nieuwe -y funtie toegevoegd (kijk in -h voor hulp)'
+version='2.7.7'
+commit='filetype ondersteuning toegevoegd voor de custom thumbnail vanuit bestanden, jpeg en png'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1029,7 +1029,7 @@ else
 						else
 							if [[ -f $instaurl ]]; then
 								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
-								if [[ $instaurlextentie == "jpg" ]]; then
+								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "png" ]]; then
 									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
 									fotocrop
 								else
