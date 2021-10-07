@@ -1,5 +1,5 @@
 #!/bin/bash
-version='3.4.5'
+version='3.5.1'
 commit='slime groepdetectie gemaakt die van eerdere groepen een list maakt en die dan af gaat in andere nummers om te kijken of een groep hetzelfde is'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
@@ -1008,14 +1008,14 @@ else
 					if [[ $lijst == "" ]]; then
 						echo -e ""
 					fi
-					echo $huidigegroep >> ~/Documents/youtube-dl/.black.list
-					echo "Aan groep lijst toegevoegd: $huidigegroep "
+					echo $huidigegroep|tr [:upper:] [:lower:] >> ~/Documents/youtube-dl/.black.list
+					echo "Groep aan lijst toegevoegd: $huidigegroep "
 					lijst=`echo "$lijst $huidigegroep"`
 				fi
 			done
 			if [[ $lijst != "" ]]; then
 				lijst=`echo "$lijst"|sed -e "s/ //"`
-				echo $lijst > ~/Documents/youtube-dl/.vorigegroepen.list
+				echo $lijst|tr [:upper:] [:lower:] > ~/Documents/youtube-dl/.vorigegroepen.list
 				echo -e "\nals je deze groepen weer wilt verwijderen doe dan youtubedl -d"
 			fi
 			blacklistaf=`cat ~/Documents/youtube-dl/.black.list|sed -e "s|'|\\\\\'|"|xargs`
