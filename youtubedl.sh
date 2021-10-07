@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.0.3'
-commit='verbeterde structuur'
+version='3.05'
+commit='download trap verbeterd'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -26,6 +26,18 @@ locatie () {
 		exec $SHELL
 		exit 0
 	fi
+}
+cleanupfiles () {
+	filenaamverbeterdrm=`echo $filenaamverbeterd|rev|sed -e "s/3pm.//"|rev`
+	GLOBIGNORE=*.mp3
+	rm ~/Documents/youtube-dl/file.jpg ''"$filenaamverbeterdrm"''* &> /dev/null
+	unset GLOBIGNORE
+	#ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null||nietgelukt=1
+	exiftool "$filenaamverbeterd"|grep "User Defined Text               : (URL)"&>/dev/null||nietgelukt=1
+	if [[ $nietgelukt == 1 ]]; then
+		rm "$filenaamverbeterd" &> /dev/null
+	fi
+	exit 1
 }
 help () {
 	echo ""
@@ -464,28 +476,18 @@ else
 		echo -e "Account:	$account\n\n"
 		if [[ "$vofa" == "a" ]]; then 
 			filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
-			#sleep 10; ps -ef|grep youtube-[d]l; echo $?&> /dev/null && pkill python3; youtubedl "$@"
-			while true; do #[[ $allesgeregeld != 1 ]]; do
+			while true; do
+				trap - SIGINT
+				trap
 				/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 				if [[ $goedgegaan == 1 ]]; then
 					break
 				else
 					echo "opniew proberen? (Y/n)"
+					trap cleanupfiles SIGINT
 					read opniewproberen
-					if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then
-						filenaamverbeterdrm=`echo $filenaamverbeterd|rev|sed -e "s/3pm.//"|rev`
-						GLOBIGNORE=*.mp3
-						rm ''"$filenaamverbeterdrm"''*
-						unset GLOBIGNORE
-						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null||nietgelukt=1
-						if [[ $nietgelukt == 1 ]]; then
-							rm "$filenaamverbeterd"
-						else
-							rm ~/Documents/youtube-dl/file.jpg
-						fi
-						exit 1
-					#else
-						#youtube-dl --rm-cache-dir &> /dev/null
+					if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
+						cleanupfiles
 					fi
 				fi
 			done
@@ -1100,6 +1102,7 @@ else
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\rThumbnail gegenereerd.                                            "
+				eenwhileloopgebeurt=1
 			fi
 			if [[ $eindesec != "" ]]; then
 				if [[ $eindesec == *":"* ]]; then
@@ -1134,6 +1137,7 @@ else
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\rAudio bijgesneden                                            "
+				eenwhileloopgebeurt=1
 			fi
 			minuut=0
 			sec=0
@@ -1208,6 +1212,7 @@ else
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\rSplitten gedaan                                            "
+				eenwhileloopgebeurt=1
 			fi
 			minuut=0
 			sec=""
@@ -1266,6 +1271,7 @@ else
 				sleep .3
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\rAudio bijgesneden                                            "
+				eenwhileloopgebeurt=1
 			fi
 		fi
 		if [[ "$vofa" == "v" ]]; then
@@ -1344,9 +1350,11 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 		fi
 	fi
 fi
-sleep .2
-echo ""
-echo -ne "\r"
+if [[ $eenwhileloopgebeurt == 1 ]]; then
+	sleep .2
+	echo ""
+	echo -ne "\r"
+fi
 if [[ trouble == 1 ]]; then
 	echo $typ
 fi
