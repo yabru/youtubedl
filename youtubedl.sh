@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.0.5'
-commit='download trap verbeterd'
+version='3.4.5'
+commit='slime groepdetectie gemaakt die van eerdere groepen een list maakt en die dan af gaat in andere nummers om te kijken of een groep hetzelfde is'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -70,7 +70,6 @@ help () {
 	echo ""
 	echo "thumbnail extract"
 	echo "-f	[FOTO DOWNLOAD]			Werkt hetzelfde als het downloaden van video en audio alleen download het sript met dit argument thumbnail's"
-	echo "-d	[FOTO DOWNLOAD](db)		Debug voor foto download"
 	echo ""
 	echo "technisch:"
 	echo "-U	[UPDATE]			Update dependencies als dat nodig is"
@@ -301,6 +300,21 @@ mint () {
 		instaurl="vid"
 	fi
 }
+mind () {
+	ls ~/Documents/youtube-dl/.vorigegroepen.list &>/dev/null&&mindgevonden=1
+	if [[ $mindgevonden == 1 ]]; then
+		teverwijderengroepenarray=(`cat ~/Documents/youtube-dl/.vorigegroepen.list`)
+		for g in ${teverwijderengroepenarray[@]]}; do
+			sed -i '' "s/$g//" ~/Documents/youtube-dl/.black.list
+			sed -i '' '/^[[:space:]]*$/d' ~/Documents/youtube-dl/.black.list
+		done
+		rm ~/Documents/youtube-dl/.vorigegroepen.list &>/dev/null
+	else
+		echo -e "Vorige sessie groepen niet gevonden.\nvoor handmatige manipulatie bewerk: ~/Documents/youtube-dl/.black.list"
+		exit 1
+	fi
+	exit 0
+}
 while getopts u:haridfobs:e:t:UTm:g:vy: flag;
 do
 	case "${flag}" in
@@ -310,7 +324,7 @@ do
 
 	a)			vofa=a;;
 
-	d)			trouble=1;;
+	d)			mind;;
 
 	f)			image=1;;
 
@@ -353,6 +367,7 @@ done
 #############################
 #	HET BEGIN VAN DE CODE	#
 #############################
+rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
 	echo "youtubedl version $version"
 	echo "laatste patch bericht: $commit"
@@ -365,6 +380,7 @@ if [[ $algedaanvidpad != "" ]]; then
 	if [[ $gehaald == 1 ]]; then
 		yourl=`exiftool "$algedaanvidpad"|grep URL`
 		yourl=`echo ${yourl:40}`
+
 	fi
 fi
 if  [[ "$yourl" == "" ]]; then
@@ -418,13 +434,7 @@ if [[ $image == "1" ]]; then
 	filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
 	troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
 	epiclink=`youtube-dl $yourl --get-thumbnail --no-check-certificate`
-
-	if [[ $trouble  == "1" ]]; then
-		mind
-		wget -O "$troll" $epiclink
-	else
-		wget -O "$troll" $epiclink &> /dev/null
-	fi
+	wget -O "$troll" $epiclink &> /dev/null
 	exit
 else
 	#defineer filenaam als de naam die het bestandje krijgt van youtube-dl
@@ -986,6 +996,37 @@ else
 					fi
 				fi
 			fi
+			hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
+			n=0
+			while [ "$n" -lt $hoeveelgroepen ]; do
+				groepnognietgevonden=0
+				n=$(( n + 1 ))
+				nt=$(( n + 1 ))
+				huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
+				cat ~/Documents/youtube-dl/.black.list |grep -i "$huidigegroep" &>/dev/null||groepnognietgevonden=1
+				if [[ $groepnognietgevonden == 1 ]]; then
+					if [[ $lijst == "" ]]; then
+						echo -e ""
+					fi
+					echo $huidigegroep >> ~/Documents/youtube-dl/.black.list
+					echo "Aan groep lijst toegevoegd: $huidigegroep "
+					lijst=`echo "$lijst $huidigegroep"`
+				fi
+			done
+			if [[ $lijst != "" ]]; then
+				lijst=`echo "$lijst"|sed -e "s/ //"`
+				echo $lijst > ~/Documents/youtube-dl/.vorigegroepen.list
+				echo -e "\nals je deze groepen weer wilt verwijderen doe dan youtubedl -d"
+			fi
+			blacklistaf=`cat ~/Documents/youtube-dl/.black.list|sed -e "s|'|\\\\\'|"|xargs`
+			blacklist=($blacklistaf)
+			for t in ${blacklist[@]}; do
+				echo $verbeterdartiest|grep -i "^$t "&>/dev/null&&verbeterdartiest=`echo $verbeterdartiest|sed -e "s|$t |#$t |g"`
+				echo $verbeterdartiest|grep -i " $t "&>/dev/null&&verbeterdartiest=`echo $verbeterdartiest|sed -e "s| $t | #$t |g"`
+			done
+			laatstewoordvanartiest=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
+			laatstewoordvanartiestrev=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'`
+			cat ~/Documents/youtube-dl/.black.list |grep -i $laatstewoordvanartiest&>/dev/null&&verbeterdartiest=`echo $verbeterdartiest|rev|sed -e "s/$laatstewoordvanartiestrev/$laatstewoordvanartiestrev#/"|rev`
 			if [[ $liedtitel == "" ]]; then
 				liedtitelzonderprod=`echo $titel`
 				artiestnaam=`echo $account|awk 'BEGIN{FS=" - "}{print $1}'`
@@ -1354,7 +1395,4 @@ if [[ $eenwhileloopgebeurt == 1 ]]; then
 	sleep .2
 	echo ""
 	echo -ne "\r"
-fi
-if [[ trouble == 1 ]]; then
-	echo $typ
 fi
