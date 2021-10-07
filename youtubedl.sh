@@ -1,5 +1,5 @@
 #!/bin/bash
-version='3.05'
+version='3.0.5'
 commit='download trap verbeterd'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
