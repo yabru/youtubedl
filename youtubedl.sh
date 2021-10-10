@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.5.1'
-commit='slime groepdetectie gemaakt die van eerdere groepen een list maakt en die dan af gaat in andere nummers om te kijken of een groep hetzelfde is'
+version='3.5.3'
+commit='kleine verbeterigen overal'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -64,9 +64,9 @@ help () {
 	echo "metadata (audio)"
 	echo "-m	[MANIPULATIE] 			manipuleer de titel van de titel zodat het script denkt dat je input de titel is die hij dan verwerkt (handig voor -T)"
 	echo "-r	[ROTZOOI TITEL]			Voor min a, een titel zonder goede structuur"
-	echo "-g	[GENRE]					Zet voor de huidge download een andere genre voor de huidige download"
-	echo "-T	[THUMBNAIL] 			Genereerd zelf een thumbnail van een insta post via een url na argument (ondersteund: youtube_link insta_link jpg_bestand)"
-	echo "	[THUMBNAIL]			(\"youtubedl -T vid\" betekend dat hij de huidige thumbnail gebruik als foto \"youtubedl -T INSTA_URL|boven(of onder) sneidt hij af)"
+	echo "-g	[GENRE]				Zet voor de huidge download een andere genre voor de huidige download"
+	echo "-T	[THUMBNAIL] 			Genereerd zelf een thumbnail met text van een foto via een url na argument (ondersteund: youtube_link, insta_link, bestanden, andere foto link)"
+	echo "	[THUMBNAIL]			(\"youtubedl -T\" (zonder argument) betekend dat hij de huidige thumbnail gebruik als foto \"youtubedl -T INSTA_URL\|boven(of onder) sneidt hij af)"
 	echo ""
 	echo "thumbnail extract"
 	echo "-f	[FOTO DOWNLOAD]			Werkt hetzelfde als het downloaden van video en audio alleen download het sript met dit argument thumbnail's"
@@ -81,12 +81,6 @@ help () {
 	echo "-b	[BEIDE]				Download beide video en audio in één commando (maar één link mogelijk)"
 	echo "-v	[VERSIE]			laat de huidige versie van het script zien met het laatste update bericht"
 	exit 10
-}
-mind (){
-	echo -e "\n\$random is $random\n"
-	echo -e "\$filenaam is $filenaam\n"
-	echo -e "\$filenaamZonderExtentie is $filenaamZonderExtentie\n"
-	echo -e "\$troll is $troll\n"
 }
 toolscheck () {
 	for t in ${tools[@]}; do
@@ -309,6 +303,11 @@ mind () {
 			sed -i '' '/^[[:space:]]*$/d' ~/Documents/youtube-dl/.black.list
 		done
 		rm ~/Documents/youtube-dl/.vorigegroepen.list &>/dev/null
+		if [[ ${#teverwijderengroepenarray[@]} -gt 1 ]]; then
+			echo "groepen ${teverwijderengroepenarray[@]} verwijderd."
+		else
+			echo "groep ${teverwijderengroepenarray[@]} verwijderd."
+		fi
 	else
 		echo -e "Vorige sessie groepen niet gevonden.\nvoor handmatige manipulatie bewerk: ~/Documents/youtube-dl/.black.list"
 		exit 1
