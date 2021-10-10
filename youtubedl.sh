@@ -1,6 +1,6 @@
 #!/bin/bash
-version=''3.5.3''
-commit='loltest'
+version='3.5.4'
+commit='l'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
