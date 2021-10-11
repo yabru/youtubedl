@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.5.3'
-commit='test'
+version='3.5.5'
+commit='verbetering op de auto groep detectie'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1017,11 +1017,13 @@ else
 				echo $lijst|tr [:upper:] [:lower:] > ~/Documents/youtube-dl/.vorigegroepen.list
 				echo -e "\nals je deze groepen weer wilt verwijderen doe dan youtubedl -d"
 			fi
-			blacklistaf=`cat ~/Documents/youtube-dl/.black.list|sed -e "s|'|\\\\\'|"|xargs`
-			blacklist=($blacklistaf)
-			for t in ${blacklist[@]}; do
-				echo $verbeterdartiest|grep -i "^$t "&>/dev/null&&verbeterdartiest=`echo $verbeterdartiest|sed -e "s|$t |#$t |g"`
-				echo $verbeterdartiest|grep -i " $t "&>/dev/null&&verbeterdartiest=`echo $verbeterdartiest|sed -e "s| $t | #$t |g"`
+			artiestarray=($verbeterdartiest)
+			for i in  ${artiestarray[@]}; do
+				while [[ $i == *"#"* ]]; do
+					i=`echo $i|sed -e "s/#//"`
+				done
+				ilowercase=`echo $i|tr [:upper:] [:lower:]`
+				grep -Rn "^$ilowercase$" ~/Documents/youtube-dl/.black.list &> /dev/null && verbeterdartiest=`echo $verbeterdartiest|sed -e "s|$i|#$i|g"`
 			done
 			laatstewoordvanartiest=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
 			laatstewoordvanartiestrev=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'`
