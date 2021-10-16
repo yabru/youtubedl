@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.5.5'
-commit='verbetering op de auto groep detectie'
+version='3.5.8'
+commit='bugfixes met betrouwbaardere output'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1004,17 +1004,17 @@ else
 				huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
 				cat ~/Documents/youtube-dl/.black.list |grep -i "$huidigegroep" &>/dev/null||groepnognietgevonden=1
 				if [[ $groepnognietgevonden == 1 ]]; then
-					if [[ $lijst == "" ]]; then
+					if [[ $lijstvoorshow == "" ]]; then
 						echo -e ""
 					fi
 					echo $huidigegroep|tr [:upper:] [:lower:] >> ~/Documents/youtube-dl/.black.list
 					echo "Groep aan lijst toegevoegd: $huidigegroep "
-					lijst=`echo "$lijst $huidigegroep"`
+					lijstvoorshow=`echo "$lijstvoorshow $huidigegroep"`
 				fi
 			done
-			if [[ $lijst != "" ]]; then
-				lijst=`echo "$lijst"|sed -e "s/ //"`
-				echo $lijst|tr [:upper:] [:lower:] > ~/Documents/youtube-dl/.vorigegroepen.list
+			if [[ $lijstvoorshow != "" ]]; then
+				lijstvoorshow=`echo "$lijstvoorshow"|sed -e "s/ //"`
+				echo $lijstvoorshow|tr [:upper:] [:lower:] > ~/Documents/youtube-dl/.vorigegroepen.list
 				echo -e "\nals je deze groepen weer wilt verwijderen doe dan youtubedl -d"
 			fi
 			artiestarray=($verbeterdartiest)
@@ -1027,7 +1027,6 @@ else
 			done
 			laatstewoordvanartiest=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
 			laatstewoordvanartiestrev=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'`
-			cat ~/Documents/youtube-dl/.black.list |grep -i $laatstewoordvanartiest&>/dev/null&&verbeterdartiest=`echo $verbeterdartiest|rev|sed -e "s/$laatstewoordvanartiestrev/$laatstewoordvanartiestrev#/"|rev`
 			if [[ $liedtitel == "" ]]; then
 				liedtitelzonderprod=`echo $titel`
 				artiestnaam=`echo $account|awk 'BEGIN{FS=" - "}{print $1}'`
@@ -1051,9 +1050,9 @@ else
 					genre=`cat ~/Documents/youtube-dl/.genre`	
 				fi
 			fi
-			if [[ $verbeterdartiest == "##"* ]]; then
+			while [[ $verbeterdartiest == *"##"* ]]; do
 				verbeterdartiest=`echo $verbeterdartiest|sed -e "s/##/#/"`
-			fi
+			done
 			while [[ $verbeterdartiest == *"  "* ]]; do
 				verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
 			done
