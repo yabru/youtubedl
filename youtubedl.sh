@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.5.8'
-commit='bugfixes met betrouwbaardere output'
+version='3.5.9'
+commit='kleine thumbnail generatie verbeteringen'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1081,7 +1081,7 @@ else
 						else
 							if [[ -f $instaurl ]]; then
 								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
-								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "png" ]]; then
+								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
 									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
 									fotocrop
 								else
@@ -1089,19 +1089,17 @@ else
 									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
 								fi 
 							else
-								echo "Geen ondersteunde link herkend, wat wil je doen"
-								echo "(1) huidige link proberen te downloaden, (2) huidige thumbnail gebruiken"
-								read fotokeuze
+								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								fotokeuze=1
 								if [[ $fotokeuze == 1 ]]; then
-									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null
-									fotocrop
-								else
-									if [[ $fotokeuze == 2 ]]; then
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null	
-									else
-										echo "geen herkend teken ga uit van 2"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-									fi
+									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+									if [[ $fotokeuze != 2 ]]; then
+										fotocrop
+									fi		
+								fi
+								if [[ $fotokeuze == 2 ]]; then
+									echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
 								fi
 							fi
 						fi
@@ -1133,7 +1131,7 @@ else
 					else
 						titelvergrotingsfactor=156
 					fi
-					convert -font Impact -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
