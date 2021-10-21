@@ -397,8 +397,8 @@ if [[ $versioncheck == 1 ]]; then
 	echo "laatste patch bericht: $commit"
 	exit 0
 fi
-toolscheck
 locatie
+toolscheck
 if [[ $algedaanvidpad != "" ]]; then
 	ls "$algedaanvidpad" &> /dev/null && gehaald=1
 	if [[ $gehaald == 1 ]]; then
