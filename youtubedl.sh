@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.5.9'
-commit='kleine thumbnail generatie verbeteringen'
+version='3.6.0'
+commit='de eerste keer runner verbeterd, zou moeten werken nu'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -20,7 +20,32 @@ locatie () {
 		if [[ $locatieCheck == "1" ]]; then
 			rm /usr/local/bin/youtubedl
 		fi
-		echo -e "\nGeen symlink gevonden voor dit script, deze wordt voor je gemaakt,\nje kan nu het YouTube Download script runnen door youtubedl te typen\n"
+		which brew &> /dev/null|| ls /usr/local/bin/brew &> /dev/null||brewiserniet=1
+		if [[ $brewiserniet == 1 ]]; then
+			echo "je hebt HomeBrew niet geinstalleerd, Dit is esentieel voor youtubedl om te functioneren."
+			echo ""
+			echo "je instaleerd Homebrew met:"
+			echo 'bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+			exit 1
+		fi
+		realpath --version||coreutilsnietgevonden=1
+		if [[ $coreutilsnietgevonden == 1 ]]; then
+			echo "essentieel component mist: coreutils, mag deze gedownload worden? Y/n"
+			while [[ $afgerond != 1 ]]; do
+				read janee
+				if [[ $janee == "" ]]||[[ $janee == "Y" ]]||[[ $janee == "y" ]]||[[ $janee == "yes" ]]||[[ $janee == "Yes" ]]||[[ $janee == "YES" ]]; then
+					brew install coreutils
+					afgerond=1
+				else
+					if [[ $janee == "N" ]]||[[ $janee == "n" ]]||[[ $janee == "no" ]]||[[ $janee == "No" ]]||[[ $janee == "NO" ]]; then
+						exit 1
+					else
+						echo "geen herkend antwoord"
+					fi
+				fi
+			done	
+		fi
+		echo -e "\nGeen symlink gevonden voor dit script, deze wordt voor je gemaakt,\nje kan nu het YouTube Download script runnen door youtubedl te typen\nVergeet niet om eenmalig youtubedl -i te runnen, dit instaleerd je basis\n"
 		SCRIPT=`realpath $0`
 		ln -s $SCRIPT /usr/local/bin/youtubedl
 		exec $SHELL
