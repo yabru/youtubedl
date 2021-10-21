@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.6.0'
-commit='de eerste keer runner verbeterd, zou moeten werken nu'
+version='3.6.1'
+commit='instalatie verbeterd'
 tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -13,6 +13,28 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
+berekenmin () {
+	urenvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $1}'`
+	urenna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $1}'`
+	minvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $2}'`
+	minna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $2}'`
+	if [[ $urenna != $urenvoor ]]; then
+		if [[ $urenna -gt $urenvoor ]]; then
+			minerbij=$(( urenna - urenvoor ))
+			minerbij=$(( minerbij * 60 ))
+			minna=$(( minna + minerbij ))
+		else
+			if [[ $urenna == "0"* ]]; then
+				urenna=`echo "$urenna"|sed -e "s/0//"`
+			fi
+			urenna=$(( urenna + 24 ))
+			minerbij=$(( urenna - urenvoor ))
+			minerbij=$(( minerbij * 60 ))
+			minna=$(( minna + minerbij ))
+		fi
+	fi
+	berekend=$(( minna - minvoor ))
+}
 locatie () {
 	/usr/local/bin/youtubedl -h &> /dev/null;exitcode=$?
 	if [[ $exitcode != 10 ]]; then
@@ -25,7 +47,7 @@ locatie () {
 			echo "je hebt HomeBrew niet geinstalleerd, Dit is esentieel voor youtubedl om te functioneren."
 			echo ""
 			echo "je instaleerd Homebrew met:"
-			echo 'bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+			echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 			exit 1
 		fi
 		realpath --version||coreutilsnietgevonden=1
@@ -123,11 +145,16 @@ toolscheck () {
 		for t in ${installeerlijst[@]}; do
 			hoeveel2=$(( hoeveel2 + 1 ))
 			huidigpercentage=$(( 100 / hoeveelheidnieuweprogrammas * hoeveel2 ))
+			datevoordl=`date`
+			datevoordl=`echo ${datevoordl:11:5}`
 			brew install $t &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in / - \\ \|; do printf "\r$s		$t";sleep .1;done;done
+			datenadl=`date`
+			datenadl=`echo ${datenadl:11:5}`
 			if [[ $hoeveelheidnieuweprogrammas == $hoeveel2 ]]; then
 				huidigpercentage=100
 			fi
-			echo -ne "\r$hoeveel2/$hoeveelheidnieuweprogrammas (%$huidigpercentage)	$t\n"
+			berekenmin
+			echo -ne "\r$hoeveel2/$hoeveelheidnieuweprogrammas (%$huidigpercentage)	$t - $berekend\n"
 		done
 		echo "	"
 		echo "geinstalleerde dependencies: "${installeerlijst[@]}""
@@ -141,11 +168,12 @@ install () {
 		echo -e "je mist Homebrew, Dit is een essentieel component van deze code.."
 		echo " "
 		echo "je instaleerd Homebrew met:"
-		echo -e 'bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+		echo -e '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 		exit 1
 	fi
 	ls ~/.config/youtube-dl.conf &> /dev/null || checkinstall=1
 	if [[ $checkinstall == 1 ]]; then
+		mkdir ~/.config &>/dev/null
 		echo '--no-playlist --output "~/Documents/youtube-dl/%(uploader)s - %(title)s.%(ext)s"' > ~/.config/youtube-dl.conf
 		echo "configuratie bestanden aangemaakt"
 		checkinstall=0
