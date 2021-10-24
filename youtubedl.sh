@@ -1,7 +1,7 @@
 #!/bin/bash
-version='3.6.1'
-commit='instalatie verbeterd'
-tools=(AtomicParsley ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
+version='3.6.2'
+commit='mogelijke fix dl audio'
+tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
 random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
@@ -141,13 +141,13 @@ toolscheck () {
 		t=""
 		hoeveelheidnieuweprogrammas=`echo "${#installeerlijst[@]}"`
 		hoeveel2=0
-		echo "er zijn bepaalde dependencies niet geinstalleerd; installing..."
+		echo "er zijn bepaalde dependencies niet geinstalleerd, installing..."
 		for t in ${installeerlijst[@]}; do
 			hoeveel2=$(( hoeveel2 + 1 ))
 			huidigpercentage=$(( 100 / hoeveelheidnieuweprogrammas * hoeveel2 ))
 			datevoordl=`date`
 			datevoordl=`echo ${datevoordl:11:5}`
-			brew install $t &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in / - \\ \|; do printf "\r$s		$t";sleep .1;done;done
+			brew install $t &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in / / - - \\ \\ \|; do printf "\r$s		$t";sleep .05;done;done
 			datenadl=`date`
 			datenadl=`echo ${datenadl:11:5}`
 			if [[ $hoeveelheidnieuweprogrammas == $hoeveel2 ]]; then
@@ -163,6 +163,8 @@ toolscheck () {
 }
 install () {
 	locatie
+	touch ~/Documents/youtube-dl/.black.list
+	touch ~/Documents/youtube-dl/.white.list
 	ls /usr/local/bin/brew &> /dev/null ||checkinstall=1
 	if [[ $checkinstall == 1 ]]; then
 		echo -e "je mist Homebrew, Dit is een essentieel component van deze code.."
@@ -211,7 +213,7 @@ install () {
 		for t in ${installeerlijst[@]}; do
 			hoeveel2=$(( hoeveel2 + 1 ))
 			huidigpercentage=$(( 100 / hoeveelheidnieuweprogrammas * hoeveel2 ))
-			brew install $t &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in / - \\ \|; do printf "\r$s		$t";sleep .1;done;done
+			brew install $t &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in / / - - \\ \\ \|; do printf "\r$s		$t";sleep .05;done;done
 			if [[ $hoeveelheidnieuweprogrammas == $hoeveel2 ]]; then
 				huidigpercentage=100
 			fi
@@ -1175,7 +1177,7 @@ else
 				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
 				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
 				echtgedaan=0
-				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $caractertitel -gt 17 ]]; then
@@ -1213,7 +1215,7 @@ else
 				fi
 				echtgedaan=0
 				echo ""
-				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
 					if [[ $fadeoutsec != 0 ]]; then
@@ -1283,7 +1285,7 @@ else
 				fi
 				echtgedaan=0
 				echo ""
-				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het splitten     "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het splitten     "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					/bin/ls "$filenaamverbeterdpt1" &> /dev/null && rm "$filenaamverbeterdpt1" &> /dev/null
 					/bin/ls "$filenaamverbeterdpt2" &> /dev/null && rm "$filenaamverbeterdpt2" &> /dev/null
 					avconv -i "$filenaamverbeterd" -t $sec -metadata title="$titelpt1" -c copy "$filenaamverbeterdpt1" &> /dev/null
@@ -1325,7 +1327,7 @@ else
 				fi
 				echtgedaan=0
 				echo ""
-				while [ $echtgedaan -lt 1 ]; do for s in / - \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .1;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					if [[ $tweedelied != "" ]]; then
 						ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
 						avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
