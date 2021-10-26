@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.6.2'
-commit='mogelijke fix dl audio'
+version='3.7.0'
+commit='Config toegevoegd voor compleet andere structuur'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -223,12 +223,37 @@ install () {
 		echo "geinstalleerde dependencies: "${installeerlijst[@]}""
 		ietsgedaan=1
 	fi
-	ls ~/Documents/youtube-dl/.genre &> /dev/null||noggeengenre=1
-	if [[ $noggeengenre == 1 ]]; then
+	ls ~/Documents/youtube-dl/.config.yt&>/dev/null||geenconfig=1
+	if [[ $geenconfig == 1 ]]; then
+		echo "GENRE=" > ~/Documents/youtube-dl/.config.yt
+		echo "#de waarde die je GANRE geeft zal je standaard waarde worden" >> ~/Documents/youtube-dl/.config.yt
+		echo "" >> ~/Documents/youtube-dl/.config.yt
+		echo "ENHANSEDAUDIO=" >> ~/Documents/youtube-dl/.config.yt
+		echo "#dit zal de waarde zijn om te kijken of je enhansedaudio wilt" >> ~/Documents/youtube-dl/.config.yt
+	fi
+	genre=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^GENRE="|sed -e "s/GENRE=//"`
+	if [[ $genre == "" ]]; then
 		echo "Naar welke genre zul je het meeste luisteren? (Dit wordt de standaard genre tenzei je een speciafieke selecteerd met argumenten)"
 		read genre
-		echo "$genre" > ~/Documents/youtube-dl/.genre
+		gsed -i "s/^GENRE=.*/GENRE=$genre/" ~/Documents/youtube-dl/.config.yt
 	fi
+	enhansedaudio=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^ENHANSEDAUDIO="|sed -e "s/ENHANSEDAUDIO=//"`
+	while [[ $enhansedaudio == "" ]]; do
+		echo "wil je enhansedaudio? Ja (1)/Nee (2)"
+		read enhansedaudio
+		if [[ $enhansedaudio == 1 ]]||[[ $enhansedaudio == ja ]]||[[ $enhansedaudio == Ja ]]||[[ $enhansedaudio == JA ]]; then
+			enhansedaudio="true"
+		fi
+		if [[ $enhansedaudio == 2 ]]||[[ $enhansedaudio == Nee ]]||[[ $enhansedaudio == nee ]]||[[ $enhansedaudio == NEE ]]; then
+			enhansedaudio="false"	
+		fi
+		if [[ $enhansedaudio == "true" ]]||[[ $enhansedaudio == "false" ]]; then
+			gsed -i "s/^ENHANSEDAUDIO=.*/ENHANSEDAUDIO=$enhansedaudio/" ~/Documents/youtube-dl/.config.yt
+		else
+			echo "geen geldig argument herkend, probeer opnieuw"
+			enhansedaudio=""
+		fi
+	done
 	if [[ $ietsgedaan == 1 ]]; then
 		echo ""
 		echo "Je gedownloaden videos en audio bestanden worden nu opgeslagen in je Documents (Documenten) en in de nieuwe map genaamd: youtube-dl voor audio en youtube-dl_video voor je video bestanden"
@@ -418,6 +443,16 @@ do
 	*)			exit 0;;
 	esac
 done
+genre=`cat ~/Documents/youtube-dl/.config.yt 2>/dev/null|grep -i "^GENRE="|sed -e "s/GENRE=//"`
+if [[ $genre == "" ]]; then
+	echo "run youtubedl -i"
+	exit 1
+fi
+enhansedaudio=`cat ~/Documents/youtube-dl/.config.yt 2>/dev/null|grep -i "^ENHANSEDAUDIO="|sed -e "s/ENHANSEDAUDIO=//"`
+if [[ $enhansedaudio == "" ]]; then
+	echo "run youtubedl -i"
+	exit 1
+fi
 #############################
 #	HET BEGIN VAN DE CODE	#
 #############################
@@ -1091,6 +1126,7 @@ else
 				verbeterdartiest=`echo $account|awk 'BEGIN {FS=" - "}{print $1}'`
 			fi
 			mv "$filenaamverbeterd" ~/Documents/youtube-dl/.tijdelijk.mp3 &> /dev/null
+			cat ~/Documents/youtube-dl/.config.yt|grep -i "^GANRE"
 			if [[ $genre == "" ]]; then		
 				ls ~/Documents/youtube-dl/.genre  &> /dev/null || noggeengenre=1
 				if [[ $noggeengenre == 1 ]]; then
@@ -1198,6 +1234,17 @@ else
 				echo -ne "\rThumbnail gegenereerd.                                            "
 				eenwhileloopgebeurt=1
 			fi
+			if [[ $enhansedaudio == "true" ]]; then
+				echtgedaan=0
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		Audio aan het Enhansen      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a loudnorm -ab 320k "$filenaamverbeterd" &>/dev/null
+				touch ~/Documents/youtube-dl/.gedaan
+				sleep .2
+				rm ~/Documents/youtube-dl/.gedaan
+				echo -ne "\rAudio enhansed.                                            "
+			fi
+			genre=`cat Documents/youtube-dl/.config.yt|grep -i "^GANRE"`
 			if [[ $eindesec != "" ]]; then
 				if [[ $eindesec == *":"* ]]; then
 					fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
