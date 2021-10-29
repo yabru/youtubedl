@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.7.0'
-commit='Config toegevoegd voor compleet andere structuur'
+version='3.8.0'
+commit='nieuwe functie toegevoegd die de gebruiker het bestand zijn audio harder kan zetten met -p'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -258,7 +258,7 @@ install () {
 		echo ""
 		echo "Je gedownloaden videos en audio bestanden worden nu opgeslagen in je Documents (Documenten) en in de nieuwe map genaamd: youtube-dl voor audio en youtube-dl_video voor je video bestanden"
 	else
-		echo "Alles al geinstalleerd"
+		echo "Alles al geinstalleerd, je config: /Users/$USER/Documents/youtube-dl/.config.yt"
 	fi
 	exit 0
 }
@@ -394,7 +394,7 @@ mind () {
 	fi
 	exit 0
 }
-while getopts u:haridfobs:e:t:UTm:g:vy: flag;
+while getopts u:haridfobs:e:t:UTm:g:vy:p: flag;
 do
 	case "${flag}" in
 	u)			yourl=${OPTARG};;
@@ -440,6 +440,8 @@ do
 
 	v)			versioncheck=1;;
 
+	p)			volumepc=${OPTARG};;
+
 	*)			exit 0;;
 	esac
 done
@@ -483,7 +485,7 @@ if [[ $seconde != "" ]]; then
 	secondecijfercheck=`echo $secondecijfercheck|sed -e "s/|//"`
 	if ! [[ "$secondecijfercheck" =~ ^[0-9]+$ ]]; then
 		echo "Gebruik cijfers bij -s"
-		exit 0
+		exit 1
 	fi
 	secondecijfercheck=""
 fi
@@ -494,7 +496,7 @@ if [[ $eindesec != "" ]]; then
 	secondecijfercheck=`echo $secondecijfercheck|sed -e "s/|//g"`
 	if ! [[ "$secondecijfercheck" =~ ^[0-9]+$ ]]; then
 		echo "Gebruik cijfers bij -e"
-		exit 0
+		exit 1
 	fi
 fi
 if [[ $tweedelied != "" ]]; then
@@ -504,6 +506,20 @@ if [[ $tweedelied != "" ]]; then
 	tweedeliedcijfercheck=`echo $tweedeliedcijfercheck|sed -e "s/|//"`
 	if ! [[ "$tweedeliedcijfercheck" =~ ^[0-9]+$ ]]; then
 		echo "Gebruik cijfers bij -e"
+		exit 1
+	fi
+fi
+if [[ $volumepc != "" ]]; then
+	if ! [[ "$volumepc" =~ ^[0-9]+$ ]]; then
+		echo "geef een percentage aan bij -p"
+		echo "bvb: youtubedl -au URL -p 150 (voor 150 procent volume) (een half keer zo hard)"
+		exit 1
+	fi
+fi
+if [[ $volumepc -gt 300 ]]; then
+	echo "je volume wordt nu $volumepc%, weet je zeker dat je door wilt gaan? (y/N)"
+	read doorgaan
+	if [[ $doorgaan == "n" ]]||[[ $doorgaan == "N" ]]||[[ $doorgaan == "" ]]||[[ $doorgaan == "no" ]]||[[ $doorgaan == "No" ]]||[[ $doorgaan == "nee" ]]||[[ $doorgaan == "Nee" ]]; then
 		exit 0
 	fi
 fi
@@ -1237,12 +1253,29 @@ else
 			if [[ $enhansedaudio == "true" ]]; then
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		Audio aan het Enhansen      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-					ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a loudnorm -ab 320k "$filenaamverbeterd" &>/dev/null
+					#huidigdb=`ffmpeg -i "$filenaamverbeterd" -af "volumedetect" -vn -sn -dn -f null /dev/null &>tijdelijk.txt;cat tijdelijk.txt|tail -3|head -1|awk 'BEGIN {FS="mean_volume: "}{print $2}'|sed -e "s/-//";rm tijdelijk.txt`;huidigdb=`echo ${huidigdb:0:2}`
+					if [[ $volumepc != "" ]]; then
+						volumepc=`bc <<< "scale=2; $volumepc/100"`
+						mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" -b:a 320k "$filenaamverbeterd" &>/dev/null
+						rm ~/Documents/youtube-dl/outfile.mp3 &>/dev/null
+					else
+						mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -b:a 320k "$filenaamverbeterd"	&>/dev/null
+						rm ~/Documents/youtube-dl/outfile.mp3 &>/dev/null
+					fi
+					#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -af "volume=9dB" -ab 320k "$filenaamverbeterd" &>/dev/null
+					#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a loudnorm -ab 320k "$filenaamverbeterd" &>/dev/null
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\rAudio enhansed.                                            "
+			else
+				if [[ $volumepc != "" ]]; then
+					volumepc=`bc <<< "scale=2; $volumepc/100"`
+					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" "$filenaamverbeterd"
+				fi
 			fi
 			genre=`cat Documents/youtube-dl/.config.yt|grep -i "^GANRE"`
 			if [[ $eindesec != "" ]]; then
