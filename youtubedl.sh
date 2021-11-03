@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.8.0'
-commit='nieuwe functie toegevoegd die de gebruiker het bestand zijn audio harder kan zetten met -p'
+version='3.8.4'
+commit='-F functie toegevoegd waarbij je een al gedownloade audio files kan bewerken'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -98,11 +98,13 @@ help () {
 	echo ""
 	echo "NOODZAAKELIJK:"
 	echo "-u	[URL]				Voor het invoegen YouTube url (heeft een URL na -u nodig)"
+	echo "-F	[FILE]				sla het download aspect over met -F en geef aan welk bestand je wilt bewerken."
 	echo "-y	[URL BESTAND]			(vervanning voor -u) Haalt de url uit bestanden die eerder zijn gedownload. (pad nodig)"
 	echo ""
 	echo ""
 	echo ""
 	echo "audio	-a				Exporteer het bestand als audio met een .mp3 bestandtype en voeg uitgebreide metadata toe (standaard bestandtype is .mp4)"
+	echo "-p	[PROCENT]			Zet een eigen procent van volume (kan harder of zachter zijn) Voorbeeld: -p 150"
 	echo "-e	[EINDE](tijd)			geef aan wanneer je bestand moet stopen en houd alle metadata (met een \|\"seconde\" bepaal je hoelang de fadeout is standaard 3)"
 	echo "-s	[SECONDE](tijd)			Download vanaf de speciafieke seconde die je hem geeft (Format: onder de min -s 34 over de min 1:24)(met een \|\"seconde\" bepaal je hoelang de fadein is standaard 2)"
 	echo "-t	[TWEEDELIED](tijd)		als er meerdere liedjes in 1 video zitten. Geef aan waar de wissel in de video zit"
@@ -239,7 +241,7 @@ install () {
 	fi
 	enhansedaudio=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^ENHANSEDAUDIO="|sed -e "s/ENHANSEDAUDIO=//"`
 	while [[ $enhansedaudio == "" ]]; do
-		echo "wil je enhansedaudio? Ja (1)/Nee (2)"
+		echo "wil je enhansed audio? (hogere bitrate) Ja (1)/Nee (2)"
 		read enhansedaudio
 		if [[ $enhansedaudio == 1 ]]||[[ $enhansedaudio == ja ]]||[[ $enhansedaudio == Ja ]]||[[ $enhansedaudio == JA ]]; then
 			enhansedaudio="true"
@@ -394,7 +396,7 @@ mind () {
 	fi
 	exit 0
 }
-while getopts u:haridfobs:e:t:UTm:g:vy:p: flag;
+while getopts u:haridfobs:e:t:UTm:g:vy:p:F: flag;
 do
 	case "${flag}" in
 	u)			yourl=${OPTARG};;
@@ -442,6 +444,8 @@ do
 
 	p)			volumepc=${OPTARG};;
 
+	F)			anderefile=${OPTARG};;
+
 	*)			exit 0;;
 	esac
 done
@@ -474,9 +478,11 @@ if [[ $algedaanvidpad != "" ]]; then
 
 	fi
 fi
-if  [[ "$yourl" == "" ]]; then
-	toegang="0"
-	help
+if [[ $anderefile == "" ]]; then
+	if  [[ "$yourl" == "" ]]; then
+		toegang="0"
+		help
+	fi
 fi
 if [[ $seconde != "" ]]; then
 	seconde=`echo "$seconde"|sed -e "s/,/\./"`
@@ -516,7 +522,7 @@ if [[ $volumepc != "" ]]; then
 		exit 1
 	fi
 fi
-if [[ $volumepc -gt 300 ]]; then
+if [[ $volumepc -gt 350 ]]; then
 	echo "je volume wordt nu $volumepc%, weet je zeker dat je door wilt gaan? (y/N)"
 	read doorgaan
 	if [[ $doorgaan == "n" ]]||[[ $doorgaan == "N" ]]||[[ $doorgaan == "" ]]||[[ $doorgaan == "no" ]]||[[ $doorgaan == "No" ]]||[[ $doorgaan == "nee" ]]||[[ $doorgaan == "Nee" ]]; then
@@ -546,66 +552,79 @@ else
 	#filenaamvooracc=`/usr/local/bin/youtube-dl $yourl -x --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random%(title)s.%(ext)s"`
 	#filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename`
 	random2=`echo $random|rev`
-	alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
-	titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
-	filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
-	#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
-	filenaam=`echo $filenaamvooracc|sed -e "s|$random2| - |"|awk 'BEGIN {FS="'$random2'"}{print $1}'`
-	uploaddate=`echo $alleytinfo|awk 'BEGIN {FS="'$random2'"}{print $3}'|awk 'BEGIN {FS="'$random'"}{print $1}'`
-	uploaddate=${uploaddate:0:4}
-	filenaamExtentie=.`echo "${filenaam}"|rev|awk 'BEGIN { FS = "." } ; { print $1 }'|rev`
-	if  [[ "$filenaamExtentie" == ".m4a" ]];	#hier controleer je of het filetipe een .m4a is
-	then
-		toegang="1"
-		typ=".m4a"
-		#hij vranderd hier de tekst in het argument van filenaamverbeted van $filenaam (een .m4a) naar een .mp3
-	fi
-	if  [[ "$filenaamExtentie" == ".opus" ]]; #hier controleer je of het filetipe een .opus is
-	then
-		toegang="1"
-		typ=".opus"
-	fi
-	if	[[ "$filenaamExtentie" == ".webm" ]]; #hier controleer je of het filetipe een .webm is
-	then 
-		toegang="1"
-		typ=".opus"
+	if [[ $anderefile == "" ]]; then
+		alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
+		titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
+		filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
+		#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
+		filenaam=`echo $filenaamvooracc|sed -e "s|$random2| - |"|awk 'BEGIN {FS="'$random2'"}{print $1}'`
+		uploaddate=`echo $alleytinfo|awk 'BEGIN {FS="'$random2'"}{print $3}'|awk 'BEGIN {FS="'$random'"}{print $1}'`
+		uploaddate=${uploaddate:0:4}
+		filenaamExtentie=.`echo "${filenaam}"|rev|awk 'BEGIN { FS = "." } ; { print $1 }'|rev`
+		if  [[ "$filenaamExtentie" == ".m4a" ]];	#hier controleer je of het filetipe een .m4a is
+		then
+			toegang="1"
+			typ=".m4a"
+			#hij vranderd hier de tekst in het argument van filenaamverbeted van $filenaam (een .m4a) naar een .mp3
+		fi
+		if  [[ "$filenaamExtentie" == ".opus" ]]; #hier controleer je of het filetipe een .opus is
+		then
+			toegang="1"
+			typ=".opus"
+		fi
+		if	[[ "$filenaamExtentie" == ".webm" ]]; #hier controleer je of het filetipe een .webm is
+		then 
+			toegang="1"
+			typ=".opus"
 
-		#hier verander je de argumenten van filenaam zodat hij denkt (bij een .webm) dat het een .opus is (waar hij bij een .webm automatish naar veranderd) dit is alleen bij .webm het geval
-		filenaam=`echo $filenaam|sed -e "s/\.webm*/.opus/"`
-	fi
-	if [[ "$filenaamExtentie" == ".mp4" ]]; #een test om te kijen of het yt url wel kopt
-	then
-		toegang="1"
-		typ=".mp4"
-	fi
-	if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
-	then
-		echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
-		exit 1
+			#hier verander je de argumenten van filenaam zodat hij denkt (bij een .webm) dat het een .opus is (waar hij bij een .webm automatish naar veranderd) dit is alleen bij .webm het geval
+			filenaam=`echo $filenaam|sed -e "s/\.webm*/.opus/"`
+		fi
+		if [[ "$filenaamExtentie" == ".mp4" ]]; #een test om te kijen of het yt url wel kopt
+		then
+			toegang="1"
+			typ=".mp4"
+		fi
+		if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
+		then
+			echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
+			exit 1
+		fi
+	else
+		ls "$anderefile"&>/dev/null&&toegang=1
+		titel=`ls "$anderefile"|sed -e "s|.*/||"`
+		account="file"
 	fi
 	if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een filenaam gekregen heeft
 		#titel=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random'"}{print $2}'` # sed -e "s/ - /$random/"|
-		account=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random2'"}{print $1}'`
+		if [[ $anderefile == "" ]]; then
+			account=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random2'"}{print $1}'`
+		fi
 		echo -e "\n\nTitel:		$titel" 
 		echo " "
 		echo -e "Account:	$account\n\n"
-		if [[ "$vofa" == "a" ]]; then 
-			filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
-			while true; do
-				trap - SIGINT
-				trap
-				/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
-				if [[ $goedgegaan == 1 ]]; then
-					break
-				else
-					echo "opniew proberen? (Y/n)"
-					trap cleanupfiles SIGINT
-					read opniewproberen
-					if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
-						cleanupfiles
+		if [[ "$vofa" == "a" ]]; then
+			if [[ $anderefile == "" ]]; then
+				filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
+				while true; do
+					trap - SIGINT
+					trap
+					/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+					if [[ $goedgegaan == 1 ]]; then
+						break
+					else
+						echo "opniew proberen? (Y/n)"
+						trap cleanupfiles SIGINT
+						read opniewproberen
+						if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
+							cleanupfiles
+						fi
 					fi
-				fi
-			done
+				done
+			else
+				filenaam=$anderefile
+				filenaamverbeterd=`echo $filenaam`
+			fi
 			#/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio||echo "opniew proberen? (Y/n)"; read opniewproberen; if [[ $opniewproberen == "" ]]||[[ $opniewproberen == "y" ]]||[[ $opniewproberen == "Y" ]]; then youtubedl "$@";else exit; fi #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
 			trap exit SIGINT
 			if [[ $manueelinput != "" ]]; then
@@ -621,7 +640,7 @@ else
 				liedseperator=" -"
 			fi
 			if [[ $liedseperator == "" ]]&&[[ $titel == *"-"* ]]; then
-				liedseperator="-"–-
+				liedseperator="-"
 			fi
 			if [[ $liedseperator == "" ]]; then
 				liedseperatornietgevonden=1
@@ -1182,7 +1201,8 @@ else
 						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
 					else
 						if [[ $typeurl == "www.instagram.com"* ]]; then
-							instalooter -T outfile post $instaurl ~/Documents/youtube-dl &> /dev/null
+							instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
+							#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
 							fotocrop
 							rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
 						else
@@ -1270,6 +1290,7 @@ else
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\rAudio enhansed.                                            "
+				eenwhileloopgebeurt=1
 			else
 				if [[ $volumepc != "" ]]; then
 					volumepc=`bc <<< "scale=2; $volumepc/100"`
