@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.8.4'
-commit='-F functie toegevoegd waarbij je een al gedownloade audio files kan bewerken'
+version='3.9.0'
+commit='thumbnail beschikbaar gemaakt zonder download te forceren met -f'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -540,14 +540,17 @@ if [[ $yourltweedelinkcheck != "" ]]; then
 	allelinksbehalvedeeerste=`echo "$yourl"|sed -e "s|$yourleerstelink ||"`
 	yourl=`echo $yourleerstelink`
 fi
-if [[ $image == "1" ]]; then
-	filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename|sed -e "s/ /$random/g"`
-	filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
-	troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
-	epiclink=`youtube-dl $yourl --get-thumbnail --no-check-certificate`
-	wget -O "$troll" $epiclink &> /dev/null
-	exit
-else
+	if [[ $image == 1 ]]; then
+		if [[ $instaurl == "" ]]; then
+			filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
+			filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
+			troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
+			wget -O "$troll" `youtube-dl $yourl --get-thumbnail --no-check-certificate 2> /dev/null` &> /dev/null
+			exit
+		else
+			vofa=a
+		fi
+	fi
 	#defineer filenaam als de naam die het bestandje krijgt van youtube-dl
 	#filenaamvooracc=`/usr/local/bin/youtube-dl $yourl -x --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random%(title)s.%(ext)s"`
 	#filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename`
@@ -605,22 +608,24 @@ else
 		echo -e "Account:	$account\n\n"
 		if [[ "$vofa" == "a" ]]; then
 			if [[ $anderefile == "" ]]; then
-				filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
-				while true; do
-					trap - SIGINT
-					trap
-					/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
-					if [[ $goedgegaan == 1 ]]; then
-						break
-					else
-						echo "opniew proberen? (Y/n)"
-						trap cleanupfiles SIGINT
-						read opniewproberen
-						if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
-							cleanupfiles
+				if [[ $image == "" ]]; then			
+					filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
+					while true; do
+						trap - SIGINT
+						trap
+						/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+						if [[ $goedgegaan == 1 ]]; then
+							break
+						else
+							echo "opniew proberen? (Y/n)"
+							trap cleanupfiles SIGINT
+							read opniewproberen
+							if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
+								cleanupfiles
+							fi
 						fi
-					fi
-				done
+					done
+				fi
 			else
 				filenaam=$anderefile
 				filenaamverbeterd=`echo $filenaam`
@@ -1015,6 +1020,7 @@ else
 				liedtitelzonderprodsed=`echo ${titelgefixt:woordtellerzonderprod}`
 				liedtitelzonderprod=`echo $titelgefixt|sed -e "s/$liedtitelzonderprodsed//"`
 			fi
+
 			persoonlijst=`echo $persoonlijst|sed -e "s/x //"`
 			if [[ $allerlaatstewoord == "#"* ]]; then
 				if [[ $persoonlijst == *" x "* ]]; then
@@ -1182,93 +1188,174 @@ else
 			while [[ $verbeterdartiest == *"  "* ]]; do
 				verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
 			done
-			if [[ $prodintitel == "1" ]]; then
-				if [[ $engeneer == "@"* ]]; then
-					engeneer=`echo $engeneer|sed -e "s/@//"`
+			if [[ $image == "" ]]; then
+				if [[ $prodintitel == "1" ]]; then
+					if [[ $engeneer == "@"* ]]; then
+						engeneer=`echo $engeneer|sed -e "s/@//"`
+					fi
+					avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
+					rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
+				else
+					avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="-Onbekend-" -c copy "$filenaamverbeterd"  &> /dev/null
+					rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null
 				fi
-				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
-				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
-			else
-				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="-Onbekend-" -c copy "$filenaamverbeterd"  &> /dev/null
-				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null
 			fi
 			if [[ $instaurl != "" ]]; then
-				if [[ $instaurl == "vid" ]]; then
-					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-				else
-					typeurl=`echo $instaurl|sed -e "s|https://||"`
-					if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
-						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
+				if [[ $image == "" ]]; then	
+					if [[ $instaurl == "vid" ]]; then
+						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
 					else
-						if [[ $typeurl == "www.instagram.com"* ]]; then
-							instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
-							#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
-							fotocrop
-							rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
+						typeurl=`echo $instaurl|sed -e "s|https://||"`
+						if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
+							wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
 						else
-							if [[ -f $instaurl ]]; then
-								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
-								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
-									fotocrop
-								else
-									echo "File type niet ondersteund, eigen video wordt gebruikt"
-									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-								fi 
+							if [[ $typeurl == "www.instagram.com"* ]]; then
+								instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
+								#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
+								fotocrop
+								rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
 							else
-								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
-								fotokeuze=1
-								if [[ $fotokeuze == 1 ]]; then
-									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
-									if [[ $fotokeuze != 2 ]]; then
+								if [[ -f $instaurl ]]; then
+									instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
+									if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
+										cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
 										fotocrop
-									fi		
-								fi
-								if [[ $fotokeuze == 2 ]]; then
-									echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+									else
+										echo "File type niet ondersteund, eigen video wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									fi 
+								else
+									echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+									fotokeuze=1
+									if [[ $fotokeuze == 1 ]]; then
+										wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+										if [[ $fotokeuze != 2 ]]; then
+											fotocrop
+										fi		
+									fi
+									if [[ $fotokeuze == 2 ]]; then
+										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+									fi
 								fi
 							fi
 						fi
 					fi
-				fi
-				hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
-				n=0
-				while [ "$n" -lt $hoeveelgroepen ]; do
-					n=$(( n + 1 ))
-					nt=$(( n + 1 ))
-					huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
-					lijst=`echo "$lijst $huidigegroep"` 
-				done
-				lijst=`echo "$lijst"|sed -e "s/ //"`
-				lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
-				artiesttitelzondergroep=`echo $verbeterdartiest`
-				for f in ${lijst2[@]}; do
-					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
-				done
-				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-				echtgedaan=0
-				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
-					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
-					if [[ $caractertitel -gt 17 ]]; then
-						huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
+					hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
+					n=0
+					while [ "$n" -lt $hoeveelgroepen ]; do
+						n=$(( n + 1 ))
+						nt=$(( n + 1 ))
+						huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
+						lijst=`echo "$lijst $huidigegroep"` 
+					done
+					lijst=`echo "$lijst"|sed -e "s/ //"`
+					lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
+					artiesttitelzondergroep=`echo $verbeterdartiest`
+					for f in ${lijst2[@]}; do
+						artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
+					done
+					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+					echtgedaan=0
+					while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+						convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
+						caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
+						if [[ $caractertitel -gt 17 ]]; then
+							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
+							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
+						else
+							titelvergrotingsfactor=156
+						fi
+						convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+						#echo -ne "\r"
+						rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+						eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
+						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+						rm ~/Documents/youtube-dl/file.jpg &> /dev/null
+					touch ~/Documents/youtube-dl/.gedaan
+					sleep .2
+					rm ~/Documents/youtube-dl/.gedaan
+					echo -ne "\rThumbnail gegenereerd.                                            "
+					eenwhileloopgebeurt=1
+				else
+					#########################
+					if [[ $instaurl == "vid" ]]; then
+						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl 2>/dev/null` &> /dev/null
 					else
-						titelvergrotingsfactor=156
+						typeurl=`echo $instaurl|sed -e "s|https://||"`
+						if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
+							wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
+						else
+							if [[ $typeurl == "www.instagram.com"* ]]; then
+								instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
+								#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
+								fotocrop
+								rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
+							else
+								if [[ -f $instaurl ]]; then
+									instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
+									if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
+										cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
+										fotocrop
+									else
+										echo "File type niet ondersteund, eigen video wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									fi 
+								else
+									echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+									fotokeuze=1
+									if [[ $fotokeuze == 1 ]]; then
+										wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+										if [[ $fotokeuze != 2 ]]; then
+											fotocrop
+										fi		
+									fi
+									if [[ $fotokeuze == 2 ]]; then
+										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+									fi
+								fi
+							fi
+						fi
 					fi
-					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
-					#echo -ne "\r"
-					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
-					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
-					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
-					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-				touch ~/Documents/youtube-dl/.gedaan
-				sleep .2
-				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rThumbnail gegenereerd.                                            "
-				eenwhileloopgebeurt=1
+					hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
+					n=0
+					while [ "$n" -lt $hoeveelgroepen ]; do
+						n=$(( n + 1 ))
+						nt=$(( n + 1 ))
+						huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
+						lijst=`echo "$lijst $huidigegroep"` 
+					done
+					lijst=`echo "$lijst"|sed -e "s/ //"`
+					lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
+					artiesttitelzondergroep=`echo $verbeterdartiest`
+					for f in ${lijst2[@]}; do
+						artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
+					done
+					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+					echtgedaan=0
+					while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+						convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
+						caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
+						if [[ $caractertitel -gt 17 ]]; then
+							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
+							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
+						else
+							titelvergrotingsfactor=156
+						fi
+						convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+						#echo -ne "\r"
+						rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+					touch ~/Documents/youtube-dl/.gedaan
+					sleep .2
+					rm ~/Documents/youtube-dl/.gedaan
+					echo -ne "\rThumbnail gegenereerd.                                            "
+					echo gedaan
+					exit
+					#########################
+				fi
 			fi
 			if [[ $enhansedaudio == "true" ]]; then
 				echtgedaan=0
@@ -1487,7 +1574,6 @@ else
 			#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd"
 		fi
 	fi
-fi
 if [[ $open == 1 ]]; then
 	if [[ $tweedeliedcheck == 1 ]]; then
 		open "$filenaamverbeterdpt1" "$filenaamverbeterdpt2"
