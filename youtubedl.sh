@@ -1,5 +1,5 @@
 #!/bin/bash
-version='3.9.0'
+version='3.9.1'
 commit='thumbnail beschikbaar gemaakt zonder download te forceren met -f'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
@@ -608,7 +608,7 @@ fi
 		echo -e "Account:	$account\n\n"
 		if [[ "$vofa" == "a" ]]; then
 			if [[ $anderefile == "" ]]; then
-				if [[ $image == "" ]]; then			
+				if [[ $image == 0 ]]; then	
 					filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
 					while true; do
 						trap - SIGINT
@@ -1188,7 +1188,7 @@ fi
 			while [[ $verbeterdartiest == *"  "* ]]; do
 				verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
 			done
-			if [[ $image == "" ]]; then
+			if [[ $image == 0 ]]; then
 				if [[ $prodintitel == "1" ]]; then
 					if [[ $engeneer == "@"* ]]; then
 						engeneer=`echo $engeneer|sed -e "s/@//"`
@@ -1201,7 +1201,7 @@ fi
 				fi
 			fi
 			if [[ $instaurl != "" ]]; then
-				if [[ $image == "" ]]; then	
+				if [[ $image == 0 ]]; then	
 					if [[ $instaurl == "vid" ]]; then
 						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
 					else
