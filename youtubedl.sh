@@ -1,6 +1,6 @@
 #!/bin/bash
-version='3.9.1'
-commit='thumbnail beschikbaar gemaakt zonder download te forceren met -f'
+version='4.0.0'
+commit='Lyrics toegevoegd (beta)'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -162,6 +162,7 @@ toolscheck () {
 		echo "geinstalleerde dependencies: "${installeerlijst[@]}""
 		exit 0
 	fi
+	which deep-translator&>/dev/null||pip install -U deep_translator
 }
 install () {
 	locatie
@@ -449,8 +450,8 @@ do
 	*)			exit 0;;
 	esac
 done
-genre=`cat ~/Documents/youtube-dl/.config.yt 2>/dev/null|grep -i "^GENRE="|sed -e "s/GENRE=//"`
-if [[ $genre == "" ]]; then
+genretest=`cat ~/Documents/youtube-dl/.config.yt 2>/dev/null|grep -i "^GENRE="|sed -e "s/GENRE=//"`
+if [[ $genretest == "" ]]; then
 	echo "run youtubedl -i"
 	exit 1
 fi
@@ -540,161 +541,177 @@ if [[ $yourltweedelinkcheck != "" ]]; then
 	allelinksbehalvedeeerste=`echo "$yourl"|sed -e "s|$yourleerstelink ||"`
 	yourl=`echo $yourleerstelink`
 fi
-	if [[ $image == 1 ]]; then
-		if [[ $instaurl == "" ]]; then
-			filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
-			filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
-			troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
-			wget -O "$troll" `youtube-dl $yourl --get-thumbnail --no-check-certificate 2> /dev/null` &> /dev/null
-			exit
-		else
-			vofa=a
-		fi
-	fi
-	#defineer filenaam als de naam die het bestandje krijgt van youtube-dl
-	#filenaamvooracc=`/usr/local/bin/youtube-dl $yourl -x --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random%(title)s.%(ext)s"`
-	#filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename`
-	random2=`echo $random|rev`
-	if [[ $anderefile == "" ]]; then
-		alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
-		titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
-		filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
-		#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
-		filenaam=`echo $filenaamvooracc|sed -e "s|$random2| - |"|awk 'BEGIN {FS="'$random2'"}{print $1}'`
-		uploaddate=`echo $alleytinfo|awk 'BEGIN {FS="'$random2'"}{print $3}'|awk 'BEGIN {FS="'$random'"}{print $1}'`
-		uploaddate=${uploaddate:0:4}
-		filenaamExtentie=.`echo "${filenaam}"|rev|awk 'BEGIN { FS = "." } ; { print $1 }'|rev`
-		if  [[ "$filenaamExtentie" == ".m4a" ]];	#hier controleer je of het filetipe een .m4a is
-		then
-			toegang="1"
-			typ=".m4a"
-			#hij vranderd hier de tekst in het argument van filenaamverbeted van $filenaam (een .m4a) naar een .mp3
-		fi
-		if  [[ "$filenaamExtentie" == ".opus" ]]; #hier controleer je of het filetipe een .opus is
-		then
-			toegang="1"
-			typ=".opus"
-		fi
-		if	[[ "$filenaamExtentie" == ".webm" ]]; #hier controleer je of het filetipe een .webm is
-		then 
-			toegang="1"
-			typ=".opus"
-
-			#hier verander je de argumenten van filenaam zodat hij denkt (bij een .webm) dat het een .opus is (waar hij bij een .webm automatish naar veranderd) dit is alleen bij .webm het geval
-			filenaam=`echo $filenaam|sed -e "s/\.webm*/.opus/"`
-		fi
-		if [[ "$filenaamExtentie" == ".mp4" ]]; #een test om te kijen of het yt url wel kopt
-		then
-			toegang="1"
-			typ=".mp4"
-		fi
-		if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
-		then
-			echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
-			exit 1
-		fi
+if [[ $image == 1 ]]; then
+	if [[ $instaurl == "" ]]; then
+		filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
+		filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
+		troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
+		wget -O "$troll" `youtube-dl $yourl --get-thumbnail --no-check-certificate 2> /dev/null` &> /dev/null
+		exit
 	else
-		ls "$anderefile"&>/dev/null&&toegang=1
-		titel=`ls "$anderefile"|sed -e "s|.*/||"`
-		account="file"
+		vofa=a
 	fi
-	if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een filenaam gekregen heeft
-		#titel=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random'"}{print $2}'` # sed -e "s/ - /$random/"|
+fi
+#defineer filenaam als de naam die het bestandje krijgt van youtube-dl
+#filenaamvooracc=`/usr/local/bin/youtube-dl $yourl -x --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random%(title)s.%(ext)s"`
+#filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename`
+random2=`echo $random|rev`
+if [[ $anderefile == "" ]]; then
+	alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
+	titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
+	filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
+	#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
+	filenaam=`echo $filenaamvooracc|sed -e "s|$random2| - |"|awk 'BEGIN {FS="'$random2'"}{print $1}'`
+	uploaddate=`echo $alleytinfo|awk 'BEGIN {FS="'$random2'"}{print $3}'|awk 'BEGIN {FS="'$random'"}{print $1}'`
+	uploaddate=${uploaddate:0:4}
+	filenaamExtentie=.`echo "${filenaam}"|rev|awk 'BEGIN { FS = "." } ; { print $1 }'|rev`
+	if  [[ "$filenaamExtentie" == ".m4a" ]];	#hier controleer je of het filetipe een .m4a is
+	then
+		toegang="1"
+		typ=".m4a"
+		#hij vranderd hier de tekst in het argument van filenaamverbeted van $filenaam (een .m4a) naar een .mp3
+	fi
+	if  [[ "$filenaamExtentie" == ".opus" ]]; #hier controleer je of het filetipe een .opus is
+	then
+		toegang="1"
+		typ=".opus"
+	fi
+	if	[[ "$filenaamExtentie" == ".webm" ]]; #hier controleer je of het filetipe een .webm is
+	then 
+		toegang="1"
+		typ=".opus"
+
+		#hier verander je de argumenten van filenaam zodat hij denkt (bij een .webm) dat het een .opus is (waar hij bij een .webm automatish naar veranderd) dit is alleen bij .webm het geval
+		filenaam=`echo $filenaam|sed -e "s/\.webm*/.opus/"`
+	fi
+	if [[ "$filenaamExtentie" == ".mp4" ]]; #een test om te kijen of het yt url wel kopt
+	then
+		toegang="1"
+		typ=".mp4"
+	fi
+	if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
+	then
+		echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
+		exit 1
+	fi
+else
+	ls "$anderefile"&>/dev/null&&toegang=1
+	titel=`ls "$anderefile"|sed -e "s|.*/||"`
+	account="file"
+fi
+if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een filenaam gekregen heeft
+	#titel=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random'"}{print $2}'` # sed -e "s/ - /$random/"|
+	if [[ $anderefile == "" ]]; then
+		account=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random2'"}{print $1}'`
+	fi
+	echo -e "\n\nTitel:		$titel" 
+	echo " "
+	echo -e "Account:	$account\n\n"
+	if [[ "$vofa" == "a" ]]; then
 		if [[ $anderefile == "" ]]; then
-			account=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random2'"}{print $1}'`
-		fi
-		echo -e "\n\nTitel:		$titel" 
-		echo " "
-		echo -e "Account:	$account\n\n"
-		if [[ "$vofa" == "a" ]]; then
-			if [[ $anderefile == "" ]]; then
-				if [[ $image == 0 ]]; then	
-					filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
-					while true; do
-						trap - SIGINT
-						trap
-						/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
-						if [[ $goedgegaan == 1 ]]; then
-							break
-						else
-							echo "opniew proberen? (Y/n)"
-							trap cleanupfiles SIGINT
-							read opniewproberen
-							if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
-								cleanupfiles
-							fi
-						fi
-					done
-				fi
-			else
-				filenaam=$anderefile
-				filenaamverbeterd=`echo $filenaam`
-			fi
-			#/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio||echo "opniew proberen? (Y/n)"; read opniewproberen; if [[ $opniewproberen == "" ]]||[[ $opniewproberen == "y" ]]||[[ $opniewproberen == "Y" ]]; then youtubedl "$@";else exit; fi #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
-			trap exit SIGINT
-			if [[ $manueelinput != "" ]]; then
-				titel=$manueelinput
-			fi
-			if [[ $titel == *" - "* ]]; then
-				liedseperator=" - "
-			fi
-			if [[ $liedseperator == "" ]]&&[[ $titel == *"- "* ]]; then
-				liedseperator="- "
-			fi
-			if [[ $liedseperator == "" ]]&&[[ $titel == *" -"* ]]; then
-				liedseperator=" -"
-			fi
-			if [[ $liedseperator == "" ]]&&[[ $titel == *"-"* ]]; then
-				liedseperator="-"
-			fi
-			if [[ $liedseperator == "" ]]; then
-				liedseperatornietgevonden=1
-			else
-				artiestnaam=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
-				artiestnaam=`echo "$artiestnaam"|sed -e "s/ / /g"`
-				artiestnaam=`echo "$artiestnaam"|iconv -c -f utf8 -t ascii`
-				liedtitel=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
-			fi
-			if [[ `echo "$artiestnaam"|wc -c` == `echo "$titel"|wc -c` ]]; then
-				artiestnaam=`echo "$titel"|awk 'BEGIN {FS=" – "}{print $1}'`
-			fi
-			if [[ $hoeveeldrafmoet == "" ]]; then
-				hoeveeldrafmoet=0
-			fi
-			if [[ $liedseperatornietgevonden == 1 ]]; then
-				if [[ $titel == *" | "* ]]; then
-					artiestnaammisschien=`echo "$titel"|awk 'BEGIN {FS="|"}{print $1}'`
-					woordtellerlied=`echo "$artiestnaammisschien" |wc -c|tr  -d '[:blank:]'`
-					woordtellerlied=$(( woordtellerlied + 1 ))
-					liedtitelmisschien=`echo ${titel:woordtellerlied}`
-					echo -e "\n\nArtiest:		$artiestnaammisschien" 
-					echo " "
-					echo -e "Tietel van lied:	$liedtitelmisschien\n\n"
-					echo "klopt wat hierboven staat? (1) Ja, (2) Nee. (1/2)"
-					read liedkeuze
-					if [[ $liedkeuze == 1 ]]; then
-						artiestnaam="$artiestnaammisschien"
-						liedtitel="$liedtitelmisschien"
+			if [[ $image == 0 ]]; then	
+				filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
+				while true; do
+					trap - SIGINT
+					trap
+					/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+					if [[ $goedgegaan == 1 ]]; then
+						break
 					else
-						if [[ $liedkeuze != 2 ]]; then
-							echo "Geen geldig teken herkend, ga uit van (2) Nee"
+						echo "opniew proberen? (Y/n)"
+						trap cleanupfiles SIGINT
+						read opniewproberen
+						if [[ $opniewproberen != "" ]]&&[[ $opniewproberen != "y" ]]&&[[ $opniewproberen != "Y" ]]; then	
+							cleanupfiles
 						fi
 					fi
-				fi	
+				done
 			fi
-			if [[ $liedtitel == "("* ]]; then
-				liedtitel=`echo $liedtitel|sed -e "s/(//"|sed -e "s/)//"`
+		else
+			filenaam=$anderefile
+			filenaamverbeterd=`echo $filenaam`
+		fi
+		#/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio||echo "opniew proberen? (Y/n)"; read opniewproberen; if [[ $opniewproberen == "" ]]||[[ $opniewproberen == "y" ]]||[[ $opniewproberen == "Y" ]]; then youtubedl "$@";else exit; fi #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
+		trap exit SIGINT
+		if [[ $manueelinput != "" ]]; then
+			titel=$manueelinput
+		fi
+		if [[ $titel == *" - "* ]]; then
+			liedseperator=" - "
+		fi
+		if [[ $liedseperator == "" ]]&&[[ $titel == *"- "* ]]; then
+			liedseperator="- "
+		fi
+		if [[ $liedseperator == "" ]]&&[[ $titel == *" -"* ]]; then
+			liedseperator=" -"
+		fi
+		if [[ $liedseperator == "" ]]&&[[ $titel == *"-"* ]]; then
+			liedseperator="-"
+		fi
+		if [[ $liedseperator == "" ]]; then
+			liedseperatornietgevonden=1
+		else
+			artiestnaam=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
+			artiestnaam=`echo "$artiestnaam"|sed -e "s/ / /g"`
+			artiestnaam=`echo "$artiestnaam"|iconv -c -f utf8 -t ascii`
+			liedtitel=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
+		fi
+		if [[ `echo "$artiestnaam"|wc -c` == `echo "$titel"|wc -c` ]]; then
+			artiestnaam=`echo "$titel"|awk 'BEGIN {FS=" – "}{print $1}'`
+		fi
+		if [[ $hoeveeldrafmoet == "" ]]; then
+			hoeveeldrafmoet=0
+		fi
+		if [[ $liedseperatornietgevonden == 1 ]]; then
+			if [[ $titel == *" | "* ]]; then
+				artiestnaammisschien=`echo "$titel"|awk 'BEGIN {FS="|"}{print $1}'`
+				woordtellerlied=`echo "$artiestnaammisschien" |wc -c|tr  -d '[:blank:]'`
+				woordtellerlied=$(( woordtellerlied + 1 ))
+				liedtitelmisschien=`echo ${titel:woordtellerlied}`
+				echo -e "\n\nArtiest:		$artiestnaammisschien" 
+				echo " "
+				echo -e "Tietel van lied:	$liedtitelmisschien\n\n"
+				echo "klopt wat hierboven staat? (1) Ja, (2) Nee. (1/2)"
+				read liedkeuze
+				if [[ $liedkeuze == 1 ]]; then
+					artiestnaam="$artiestnaammisschien"
+					liedtitel="$liedtitelmisschien"
+				else
+					if [[ $liedkeuze != 2 ]]; then
+						echo "Geen geldig teken herkend, ga uit van (2) Nee"
+					fi
+				fi
+			fi	
+		fi
+		if [[ $liedtitel == "("* ]]; then
+			liedtitel=`echo $liedtitel|sed -e "s/(//"|sed -e "s/)//"`
+		fi
+		artiestnaam=`echo "$artiestnaam"|sed -e "s/|/ /g"`
+		artiestnaamtest=`echo "$artiestnaam"|sed -e "s/#[^ ]*/$random/g"`
+		if [[ $artiestnaamtest == "$random x $random"* ]]; then
+			artiestnaam=`echo "$artiestnaam"|sed -e "s/x/ /"`
+		fi
+		hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"(" '{print NF-1}'` + 2 ))
+		n=1
+		while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
+			n=$(( n + 1 ))
+			mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="("}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+			proddetectie
+			if [[ $prodintitel == "1" ]]; then
+				engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
+				prodcleaner
 			fi
-			artiestnaam=`echo "$artiestnaam"|sed -e "s/|/ /g"`
-			artiestnaamtest=`echo "$artiestnaam"|sed -e "s/#[^ ]*/$random/g"`
-			if [[ $artiestnaamtest == "$random x $random"* ]]; then
-				artiestnaam=`echo "$artiestnaam"|sed -e "s/x/ /"`
+			if [[ $seperator != "" ]]; then
+				n=$(( hoeveelxtussenhaakjes + 1 ))
 			fi
-			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"(" '{print NF-1}'` + 2 ))
+		done
+		if [[ $seperator == "" ]]; then
 			n=1
+			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"[" '{print NF-1}'` + 2 ))
 			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
 				n=$(( n + 1 ))
-				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="("}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+				prodintitel=0
+				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="["}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
 				proddetectie
 				if [[ $prodintitel == "1" ]]; then
 					engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
@@ -704,876 +721,893 @@ fi
 					n=$(( hoeveelxtussenhaakjes + 1 ))
 				fi
 			done
-			if [[ $seperator == "" ]]; then
-				n=1
-				hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"[" '{print NF-1}'` + 2 ))
-				while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
-					n=$(( n + 1 ))
-					prodintitel=0
-					mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="["}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
-					proddetectie
-					if [[ $prodintitel == "1" ]]; then
-						engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
-						prodcleaner
-					fi
-					if [[ $seperator != "" ]]; then
-						n=$(( hoeveelxtussenhaakjes + 1 ))
-					fi
-				done
-			fi
-			if [[ $seperator == "" ]]; then
-				n=1
-				hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"{" '{print NF-1}'` + 2 ))
-				while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
-					n=$(( n + 1 ))
-					prodintitel=0
-					mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="{"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
-					proddetectie
-					if [[ $prodintitel == "1" ]]; then
-						engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
-						prodcleaner
-					fi
-					if [[ $seperator != "" ]]; then
-						n=$(( hoeveelxtussenhaakjes + 1 ))
-					fi
-				done
-			fi
-			if [[ $seperator == "" ]]; then
-				n=1
-				hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"|" '{print NF-1}'` + 2 ))
-				while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
-					n=$(( n + 1 ))
-					prodintitel=0
-					mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="|"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
-					proddetectie
-					if [[ $prodintitel == "1" ]]; then
-						engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
-						prodcleaner
-					fi
-					if [[ $seperator != "" ]]; then
-						n=$(( hoeveelxtussenhaakjes + 1 ))
-					fi
-				done
-			fi
-			if [[ $seperator == "" ]]; then
-				n=1
-				hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F")" '{print NF-1}'` + 2 ))
-				while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
-					n=$(( n + 1 ))
-					prodintitel=0
-					mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS=")"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
-					proddetectie
-					if [[ $prodintitel == "1" ]]; then
-						engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
-						prodcleaner
-					fi
-					if [[ $seperator != "" ]]; then
-						n=$(( hoeveelxtussenhaakjes + 1 ))
-					fi
-				done
-			fi
-			if [[ $seperator == "" ]]; then
-				n=1
-				hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"]" '{print NF-1}'` + 2 ))
-				while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
-					n=$(( n + 1 ))
-					prodintitel=0
-					mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="]"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
-					proddetectie
-					if [[ $prodintitel == "1" ]]; then
-						engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
-						prodcleaner
-					fi
-					if [[ $seperator != "" ]]; then
-						n=$(( hoeveelxtussenhaakjes + 1 ))
-					fi
-				done
-			fi
-			if [[ $seperator == "" ]]; then
-				n=1
-				hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F" " '{print NF-1}'` + 2 ))
-				while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
-					n=$(( n + 1 ))
-					prodintitel=0
-					mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS=" "}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
-					proddetectie
-					if [[ $prodintitel == "1" ]]; then
-						engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
-						prodcleaner
-					fi
-					if [[ $seperator != "" ]]; then
-						n=$(( hoeveelxtussenhaakjes + 1 ))
-					fi
-				done
-			fi
-			liedtitelzonderprod=$liedtitel
-			if [[ $liedtitelzonderprod == *"FT "* ]]; then
-				ftseperator="FT "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="FT "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"FT. "* ]]; then
-				ftseperator="FT. "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="FT. "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"Ft "* ]]; then
-				ftseperator="Ft "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Ft "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"Ft. "* ]]; then
-				ftseperator="Ft. "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Ft. "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"ft "* ]]; then
-				ftseperator="ft "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="ft "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"ft. "* ]]; then
-				ftseperator="ft. "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="ft. "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"feat "* ]]; then
-				ftseperator="feat "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="feat "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"feat. "* ]]; then
-				ftseperator="feat. "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="feat. "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"Feat "* ]]; then
-				ftseperator="Feat "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Feat "}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == *"Feat. "* ]]; then
-				ftseperator="Feat. "
-				featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Feat. "}{print $1}'`
-			fi
-			if [[ $ftseperator != "" ]]; then
-				liedtitelzonderprodvoorzo="$featuredawknietaf"
-				featuredawknietaf=`echo "$liedtitelzonderprod"|sed -e "s/$featuredawknietaf//"`
-				featured=`echo $featuredawknietaf|awk 'BEGIN {FS="@"}{print $1}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="-"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'`
-				artiestnaam=`echo "$artiestnaam $featured"`
-				liedtitelzonderprod="$liedtitelzonderprodvoorzo"
-			fi
-			wnrhaakjesspatie=1
-			if [[ $artiestnaam == *"(FT"* ]]; then
-				wnrhaakjesspatie=`echo $artiestnaam|awk 'END{print index($0,"(FT")}'`
-			fi
-			if [[ $artiestnaam == *"(Ft"* ]]; then
-				wnrhaakjesspatie=`echo $artiestnaam|awk 'END{print index($0,"(Ft")}'`
-			fi
-			if [[ $artiestnaam == *"(ft"* ]]; then
-				wnrhaakjesspatie=`echo $artiestnaam|awk 'END{print index($0,"(ft")}'`
-			fi
-			if [[ wnrhaakjesspatie -gt 1 ]]; then
-				restvandefeat=`echo ${artiestnaam:wnrhaakjesspatie}`
-				anderehaakje=$((`echo $restvandefeat|awk 'END{print index($0,")")}'` + wnrhaakjesspatie ))
-				anderehaakjeplus1=$(( anderehaakje + 1 ))
-				artiestnaam=`echo ${artiestnaam:0:anderehaakje-1}${artiestnaam:anderehaakje}`
-				artiestnaam=`echo ${artiestnaam:0:wnrhaakjesspatie-1}${artiestnaam:wnrhaakjesspatie}`
-			fi
-			if [[ $artiestnaam == *"FT "* ]]; then
-				ftseperator="FT "
-			fi
-			if [[ $artiestnaam == *"FT. "* ]]; then
-				ftseperator="FT. "
-			fi
-			if [[ $artiestnaam == *"Ft "* ]]; then
-				ftseperator="Ft "
-			fi
-			if [[ $artiestnaam == *"Ft. "* ]]; then
-				ftseperator="Ft. "
-			fi
-			if [[ $artiestnaam == *"ft "* ]]; then
-				ftseperator="ft "
-			fi
-			if [[ $artiestnaam == *"ft. "* ]]; then
-				ftseperator="ft. "
-			fi
-			if [[ $artiestnaam == *"feat "* ]]; then
-				ftseperator="feat "
-			fi
-			if [[ $artiestnaam == *"feat. "* ]]; then
-				ftseperator="feat. "
-			fi
-			if [[ $artiestnaam == *"Feat "* ]]; then
-				ftseperator="Feat "
-			fi
-			if [[ $artiestnaam == *"Feat. "* ]]; then
-				ftseperator="Feat. "
-			fi
-			if [[ $ftseperator != "" ]]; then
-				artiestnaam=`echo "$artiestnaam"|sed -e "s/$ftseperator/x /g"`
-			fi
-			artiestnaam=`echo $artiestnaam|sed -e "s/, / x /g"|sed -e "s/ & / x /g"`
-			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="@"}{print $1}'`
-			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="|"}{print $1}'`
-			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="-"}{print $1}'`
-			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="("}{print $1}'`
-			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="["}{print $1}'`
-			if [[ $seperator != "" ]]; then
-				liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="'$seperator'"}{print $1}'`
-			fi
-			if [[ $liedtitelzonderprod == "#"* ]]; then
-				hoeveelx=`echo $liedtitelzonderprod| awk -F"#" '{print NF-1}'`
-				liedtitelzonderprod=`echo "$liedtitelzonderprod"|rev|awk 'BEGIN {FS="#"}{print $"'$hoeveelx'"}'|rev` #voor als iemand ook nog een ander hekje heeft die we niet moeten hebben
-				liedtitelzonderprod=`echo "#$liedtitelzonderprod"`
-			fi
-			if [[ $liedtitelzonderprod == "\""* ]]; then
-				dubbelequotatiecheck=1
-				revliedtitelzonderprod=`echo $liedtitelzonderprod|rev`
-				if [[ $revliedtitelzonderprod == "\""* ]]; then
-					dubbelequotatiecheck=$(( dubbelequotatiecheck + 1 ))
-				fi
-			fi
-			if [[ $liedtitelzonderprod == "\'"* ]]; then
-				enklelequotatiecheck=1
-				revliedtitelzonderprod=`echo $liedtitelzonderprod|rev`
-				if [[ $revliedtitelzonderprod == "\'"* ]]; then
-					enklelequotatiecheck=$(( enklelequotatiecheck + 1 ))
-				fi
-			fi
-
-			if [[ $dubbelequotatiecheck == 2 ]]; then
-				liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\"//"`
-				liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\"//"`
-			fi
-			if [[ $enklelequotatiecheck == 2 ]]; then
-				liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\'//"`
-				liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\'//"`
-			fi
-
-			liedtitelzonderprod=`echo $liedtitelzonderprod|rev`
-			if [[ $liedtitelzonderprod == " "* ]]; then
-				liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/ //"`
-			fi
-			liedtitelzonderprod=`echo $liedtitelzonderprod|rev`
-			meerderenartiestentussenhaakjescheck=`echo $artiestnaam|awk 'BEGIN {FS="("}{print $2}'|awk 'BEGIN {FS=")"}{print $1}'`
-			if [[ $meerderenartiestentussenhaakjescheck == *" x "* ]] || [[ $meerderenartiestentussenhaakjescheck == *" X "* ]]; then
-				verbeterdartiest=`echo $artiestnaam|rev|sed -e "s/)//g"|sed -e "s/(//g"|rev`
-			else
-				if [[ $meerderenartiestentussenhaakjescheck == *" "* ]]; then #hij gebruikt hem als groepcheck
-					groepmethoofdletter=`echo "$meerderenartiestentussenhaakjescheck"|tr '[:upper:]' '[:lower:]'|awk '{for (i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)} 1'|sed -e "s/ //g"`
-					groepklaar=`echo "($groepmethoofdletter)"`
-					groeptussenhaakjes="($meerderenartiestentussenhaakjescheck)"
-					groeptussenhaakjesomgekeerd=`echo $groeptussenhaakjes|rev`
-					artiestnaam=`echo "$groepklaar "``echo $artiestnaam|rev|sed -e "s/$groeptussenhaakjesomgekeerd//"|rev`
-				fi
-				verbeterdartiest=`echo $artiestnaam|rev|sed -e "s/)//g"|sed -e "s/(/#/g"|rev`
-			fi
-			ls ~/Documents/youtube-dl/.blocklist &> /dev/null && blocked=`cat ~/Documents/youtube-dl/.blocklist`
-			if [[ $blocked != "" ]]; then
-				if [[ $verbeterdartiest == *"$blocked"* ]]; then
-					verbeterdartiest=`echo $verbeterdartiest|sed -e "s/$blocked //g"`
-				fi
-			fi
-			verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/ X / x /g"`
-			hoeveelx=`echo "$verbeterdartiest"| awk -F" x " '{print NF-1}'`
-			totaalhoeveel=$(( hoeveelx + 1))
-			n=0
-			while [ "$n" -lt $totaalhoeveel ]; do
-				allerlaatstewoord=""
+		fi
+		if [[ $seperator == "" ]]; then
+			n=1
+			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"{" '{print NF-1}'` + 2 ))
+			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
 				n=$(( n + 1 ))
-				persoon=`echo $verbeterdartiest|awk 'BEGIN {FS=" x "}{print $"'$n'"}'`
-				hoeveelxspatie=`echo "$persoon"| awk -F" " '{print NF-1}'`
-				hoeveelxspatieplus1=$(( hoeveelxspatie + 1 ))
-				allerlaatstewoord=`echo $persoon|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
-				if [[ $hoeveelxspatieplus1 -gt 1 ]]; then
-					laatstewoord=`echo $persoon|awk 'BEGIN {FS=" "}{print $"'$hoeveelxspatieplus1'"}'`
-					if [[ $laatstewoord == "#"* ]]; then
-						if [[ $persoon == "#"* ]]; then
-							eerstewoorddoorhekje=`echo $persoon|awk 'BEGIN {FS=" "}{print $1}'`
-							persoon=`echo "$persoon"|sed -e "s/$eerstewoorddoorhekje //"`
-							hekjetoegang=1
-						fi
-						revlaatstewoord=`echo $laatstewoord|rev`
-						persoon=`echo "$persoon"|rev|sed -e "s/$revlaatstewoord//"|rev`
-						persoon=`echo "$laatstewoord $persoon"`
-						if [[ $hekjetoegang == 1 ]]; then
-							persoon=`echo "$eerstewoorddoorhekje $persoon"`
-						fi
-					fi
+				prodintitel=0
+				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="{"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+				proddetectie
+				if [[ $prodintitel == "1" ]]; then
+					engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
+					prodcleaner
 				fi
-				if [[ $persoon == "" ]]; then
-					persoonlijst=`echo "$persoonlijst`
-				else
-					persoonlijst=`echo "$persoonlijst x $persoon"`
+				if [[ $seperator != "" ]]; then
+					n=$(( hoeveelxtussenhaakjes + 1 ))
 				fi
 			done
-			revpersoonlijst=`echo $persoonlijst|rev`
-			if [[ $revpersoonlijst == "x "* ]]; then
-				persoonlijst=`echo $revpersoonlijst|sed -e "s/x //"|rev`
-				woordtellerzonderprod=`echo "$liedtitelzonderprod" |wc -c|tr  -d '[:blank:]'`
-				woordtellerzonderprod=$(( woordtellerzonderprod + 2 ))
-				if [[ $titel != *"- "* ]]; then #dus hij is artiest -lied of hij is artiest-lied
-					if [[ $titel != *" -"* ]]; then #dus hij is artiest-lied
-						titelgefixt=`echo "$titel"|awk 'BEGIN {FS="-"}{print $2}'`
-					else #dus hij is artiest -lied
-						titelgefixt=`echo "$titel"|awk 'BEGIN {FS=" -"}{print $2}'`
-					fi
+		fi
+		if [[ $seperator == "" ]]; then
+			n=1
+			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"|" '{print NF-1}'` + 2 ))
+			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
+				n=$(( n + 1 ))
+				prodintitel=0
+				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="|"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+				proddetectie
+				if [[ $prodintitel == "1" ]]; then
+					engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
+					prodcleaner
 				fi
-				if [[ $titelgefixt == "" ]]; then
-					titelgefixt=`echo "$titel"|awk 'BEGIN {FS="- "}{print $2}'`
+				if [[ $seperator != "" ]]; then
+					n=$(( hoeveelxtussenhaakjes + 1 ))
 				fi
-				if [[ $titelgefixt == "" ]]; then
-					titelgefixt=`echo "$titel"|awk 'BEGIN {FS=" - "}{print $2}'`
+			done
+		fi
+		if [[ $seperator == "" ]]; then
+			n=1
+			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F")" '{print NF-1}'` + 2 ))
+			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
+				n=$(( n + 1 ))
+				prodintitel=0
+				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS=")"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+				proddetectie
+				if [[ $prodintitel == "1" ]]; then
+					engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
+					prodcleaner
 				fi
-				liedtitelzonderprodsed=`echo ${titelgefixt:woordtellerzonderprod}`
-				liedtitelzonderprod=`echo $titelgefixt|sed -e "s/$liedtitelzonderprodsed//"`
+				if [[ $seperator != "" ]]; then
+					n=$(( hoeveelxtussenhaakjes + 1 ))
+				fi
+			done
+		fi
+		if [[ $seperator == "" ]]; then
+			n=1
+			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F"]" '{print NF-1}'` + 2 ))
+			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
+				n=$(( n + 1 ))
+				prodintitel=0
+				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="]"}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+				proddetectie
+				if [[ $prodintitel == "1" ]]; then
+					engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
+					prodcleaner
+				fi
+				if [[ $seperator != "" ]]; then
+					n=$(( hoeveelxtussenhaakjes + 1 ))
+				fi
+			done
+		fi
+		if [[ $seperator == "" ]]; then
+			n=1
+			hoeveelxtussenhaakjes=$((`echo "$liedtitel"| awk -F" " '{print NF-1}'` + 2 ))
+			while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
+				n=$(( n + 1 ))
+				prodintitel=0
+				mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS=" "}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+				proddetectie
+				if [[ $prodintitel == "1" ]]; then
+					engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
+					prodcleaner
+				fi
+				if [[ $seperator != "" ]]; then
+					n=$(( hoeveelxtussenhaakjes + 1 ))
+				fi
+			done
+		fi
+		liedtitelzonderprod=$liedtitel
+		if [[ $liedtitelzonderprod == *"FT "* ]]; then
+			ftseperator="FT "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="FT "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"FT. "* ]]; then
+			ftseperator="FT. "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="FT. "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"Ft "* ]]; then
+			ftseperator="Ft "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Ft "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"Ft. "* ]]; then
+			ftseperator="Ft. "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Ft. "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"ft "* ]]; then
+			ftseperator="ft "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="ft "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"ft. "* ]]; then
+			ftseperator="ft. "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="ft. "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"feat "* ]]; then
+			ftseperator="feat "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="feat "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"feat. "* ]]; then
+			ftseperator="feat. "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="feat. "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"Feat "* ]]; then
+			ftseperator="Feat "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Feat "}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == *"Feat. "* ]]; then
+			ftseperator="Feat. "
+			featuredawknietaf=`echo "$liedtitelzonderprod"|awk 'BEGIN {FS="Feat. "}{print $1}'`
+		fi
+		if [[ $ftseperator != "" ]]; then
+			liedtitelzonderprodvoorzo="$featuredawknietaf"
+			featuredawknietaf=`echo "$liedtitelzonderprod"|sed -e "s/$featuredawknietaf//"`
+			featured=`echo $featuredawknietaf|awk 'BEGIN {FS="@"}{print $1}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="-"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'`
+			artiestnaam=`echo "$artiestnaam $featured"`
+			liedtitelzonderprod="$liedtitelzonderprodvoorzo"
+		fi
+		wnrhaakjesspatie=1
+		if [[ $artiestnaam == *"(FT"* ]]; then
+			wnrhaakjesspatie=`echo $artiestnaam|awk 'END{print index($0,"(FT")}'`
+		fi
+		if [[ $artiestnaam == *"(Ft"* ]]; then
+			wnrhaakjesspatie=`echo $artiestnaam|awk 'END{print index($0,"(Ft")}'`
+		fi
+		if [[ $artiestnaam == *"(ft"* ]]; then
+			wnrhaakjesspatie=`echo $artiestnaam|awk 'END{print index($0,"(ft")}'`
+		fi
+		if [[ wnrhaakjesspatie -gt 1 ]]; then
+			restvandefeat=`echo ${artiestnaam:wnrhaakjesspatie}`
+			anderehaakje=$((`echo $restvandefeat|awk 'END{print index($0,")")}'` + wnrhaakjesspatie ))
+			anderehaakjeplus1=$(( anderehaakje + 1 ))
+			artiestnaam=`echo ${artiestnaam:0:anderehaakje-1}${artiestnaam:anderehaakje}`
+			artiestnaam=`echo ${artiestnaam:0:wnrhaakjesspatie-1}${artiestnaam:wnrhaakjesspatie}`
+		fi
+		if [[ $artiestnaam == *"FT "* ]]; then
+			ftseperator="FT "
+		fi
+		if [[ $artiestnaam == *"FT. "* ]]; then
+			ftseperator="FT. "
+		fi
+		if [[ $artiestnaam == *"Ft "* ]]; then
+			ftseperator="Ft "
+		fi
+		if [[ $artiestnaam == *"Ft. "* ]]; then
+			ftseperator="Ft. "
+		fi
+		if [[ $artiestnaam == *"ft "* ]]; then
+			ftseperator="ft "
+		fi
+		if [[ $artiestnaam == *"ft. "* ]]; then
+			ftseperator="ft. "
+		fi
+		if [[ $artiestnaam == *"feat "* ]]; then
+			ftseperator="feat "
+		fi
+		if [[ $artiestnaam == *"feat. "* ]]; then
+			ftseperator="feat. "
+		fi
+		if [[ $artiestnaam == *"Feat "* ]]; then
+			ftseperator="Feat "
+		fi
+		if [[ $artiestnaam == *"Feat. "* ]]; then
+			ftseperator="Feat. "
+		fi
+		if [[ $ftseperator != "" ]]; then
+			artiestnaam=`echo "$artiestnaam"|sed -e "s/$ftseperator/x /g"`
+		fi
+		artiestnaam=`echo $artiestnaam|sed -e "s/, / x /g"|sed -e "s/ & / x /g"`
+		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="@"}{print $1}'`
+		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="|"}{print $1}'`
+		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="-"}{print $1}'`
+		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="("}{print $1}'`
+		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="["}{print $1}'`
+		if [[ $seperator != "" ]]; then
+			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="'$seperator'"}{print $1}'`
+		fi
+		if [[ $liedtitelzonderprod == "#"* ]]; then
+			hoeveelx=`echo $liedtitelzonderprod| awk -F"#" '{print NF-1}'`
+			liedtitelzonderprod=`echo "$liedtitelzonderprod"|rev|awk 'BEGIN {FS="#"}{print $"'$hoeveelx'"}'|rev` #voor als iemand ook nog een ander hekje heeft die we niet moeten hebben
+			liedtitelzonderprod=`echo "#$liedtitelzonderprod"`
+		fi
+		if [[ $liedtitelzonderprod == "\""* ]]; then
+			dubbelequotatiecheck=1
+			revliedtitelzonderprod=`echo $liedtitelzonderprod|rev`
+			if [[ $revliedtitelzonderprod == "\""* ]]; then
+				dubbelequotatiecheck=$(( dubbelequotatiecheck + 1 ))
 			fi
+		fi
+		if [[ $liedtitelzonderprod == "\'"* ]]; then
+			enklelequotatiecheck=1
+			revliedtitelzonderprod=`echo $liedtitelzonderprod|rev`
+			if [[ $revliedtitelzonderprod == "\'"* ]]; then
+				enklelequotatiecheck=$(( enklelequotatiecheck + 1 ))
+			fi
+		fi
 
-			persoonlijst=`echo $persoonlijst|sed -e "s/x //"`
-			if [[ $allerlaatstewoord == "#"* ]]; then
-				if [[ $persoonlijst == *" x "* ]]; then
-					persoonlijstrev=`echo $persoonlijst|rev`
-					allerlaatstewoordrev=`echo $allerlaatstewoord|rev`
-					groepnaamzonderlaatsehekje=`echo $persoonlijstrev|sed -e "s/$allerlaatstewoordrev //"|rev`
-					if [[ $groepnaamzonderlaatsehekje == "#"* ]]; then
-						eerstewoordhekje=`echo "$groepnaamzonderlaatsehekje"|awk 'BEGIN {FS=" "}{print $1}'`
-						groepzondereersteenlaatstehekje=`echo "$groepnaamzonderlaatsehekje"|sed -e "s/$eerstewoordhekje //"`
-						verbeterdartiest=`echo "$eerstewoordhekje $allerlaatstewoord $groepzondereersteenlaatstehekje"`
-						echo $verbeterdartiest
+		if [[ $dubbelequotatiecheck == 2 ]]; then
+			liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\"//"`
+			liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\"//"`
+		fi
+		if [[ $enklelequotatiecheck == 2 ]]; then
+			liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\'//"`
+			liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/\'//"`
+		fi
+
+		liedtitelzonderprod=`echo $liedtitelzonderprod|rev`
+		if [[ $liedtitelzonderprod == " "* ]]; then
+			liedtitelzonderprod=`echo $liedtitelzonderprod|sed -e "s/ //"`
+		fi
+		liedtitelzonderprod=`echo $liedtitelzonderprod|rev`
+		meerderenartiestentussenhaakjescheck=`echo $artiestnaam|awk 'BEGIN {FS="("}{print $2}'|awk 'BEGIN {FS=")"}{print $1}'`
+		if [[ $meerderenartiestentussenhaakjescheck == *" x "* ]] || [[ $meerderenartiestentussenhaakjescheck == *" X "* ]]; then
+			verbeterdartiest=`echo $artiestnaam|rev|sed -e "s/)//g"|sed -e "s/(//g"|rev`
+		else
+			if [[ $meerderenartiestentussenhaakjescheck == *" "* ]]; then #hij gebruikt hem als groepcheck
+				groepmethoofdletter=`echo "$meerderenartiestentussenhaakjescheck"|tr '[:upper:]' '[:lower:]'|awk '{for (i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)} 1'|sed -e "s/ //g"`
+				groepklaar=`echo "($groepmethoofdletter)"`
+				groeptussenhaakjes="($meerderenartiestentussenhaakjescheck)"
+				groeptussenhaakjesomgekeerd=`echo $groeptussenhaakjes|rev`
+				artiestnaam=`echo "$groepklaar "``echo $artiestnaam|rev|sed -e "s/$groeptussenhaakjesomgekeerd//"|rev`
+			fi
+			verbeterdartiest=`echo $artiestnaam|rev|sed -e "s/)//g"|sed -e "s/(/#/g"|rev`
+		fi
+		ls ~/Documents/youtube-dl/.blocklist &> /dev/null && blocked=`cat ~/Documents/youtube-dl/.blocklist`
+		if [[ $blocked != "" ]]; then
+			if [[ $verbeterdartiest == *"$blocked"* ]]; then
+				verbeterdartiest=`echo $verbeterdartiest|sed -e "s/$blocked //g"`
+			fi
+		fi
+		verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/ X / x /g"`
+		hoeveelx=`echo "$verbeterdartiest"| awk -F" x " '{print NF-1}'`
+		totaalhoeveel=$(( hoeveelx + 1))
+		n=0
+		while [ "$n" -lt $totaalhoeveel ]; do
+			allerlaatstewoord=""
+			n=$(( n + 1 ))
+			persoon=`echo $verbeterdartiest|awk 'BEGIN {FS=" x "}{print $"'$n'"}'`
+			hoeveelxspatie=`echo "$persoon"| awk -F" " '{print NF-1}'`
+			hoeveelxspatieplus1=$(( hoeveelxspatie + 1 ))
+			allerlaatstewoord=`echo $persoon|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
+			if [[ $hoeveelxspatieplus1 -gt 1 ]]; then
+				laatstewoord=`echo $persoon|awk 'BEGIN {FS=" "}{print $"'$hoeveelxspatieplus1'"}'`
+				if [[ $laatstewoord == "#"* ]]; then
+					if [[ $persoon == "#"* ]]; then
+						eerstewoorddoorhekje=`echo $persoon|awk 'BEGIN {FS=" "}{print $1}'`
+						persoon=`echo "$persoon"|sed -e "s/$eerstewoorddoorhekje //"`
+						hekjetoegang=1
 					fi
+					revlaatstewoord=`echo $laatstewoord|rev`
+					persoon=`echo "$persoon"|rev|sed -e "s/$revlaatstewoord//"|rev`
+					persoon=`echo "$laatstewoord $persoon"`
+					if [[ $hekjetoegang == 1 ]]; then
+						persoon=`echo "$eerstewoorddoorhekje $persoon"`
+					fi
+				fi
+			fi
+			if [[ $persoon == "" ]]; then
+				persoonlijst=`echo "$persoonlijst`
+			else
+				persoonlijst=`echo "$persoonlijst x $persoon"`
+			fi
+		done
+		revpersoonlijst=`echo $persoonlijst|rev`
+		if [[ $revpersoonlijst == "x "* ]]; then
+			persoonlijst=`echo $revpersoonlijst|sed -e "s/x //"|rev`
+			woordtellerzonderprod=`echo "$liedtitelzonderprod" |wc -c|tr  -d '[:blank:]'`
+			woordtellerzonderprod=$(( woordtellerzonderprod + 2 ))
+			if [[ $titel != *"- "* ]]; then #dus hij is artiest -lied of hij is artiest-lied
+				if [[ $titel != *" -"* ]]; then #dus hij is artiest-lied
+					titelgefixt=`echo "$titel"|awk 'BEGIN {FS="-"}{print $2}'`
+				else #dus hij is artiest -lied
+					titelgefixt=`echo "$titel"|awk 'BEGIN {FS=" -"}{print $2}'`
+				fi
+			fi
+			if [[ $titelgefixt == "" ]]; then
+				titelgefixt=`echo "$titel"|awk 'BEGIN {FS="- "}{print $2}'`
+			fi
+			if [[ $titelgefixt == "" ]]; then
+				titelgefixt=`echo "$titel"|awk 'BEGIN {FS=" - "}{print $2}'`
+			fi
+			liedtitelzonderprodsed=`echo ${titelgefixt:woordtellerzonderprod}`
+			liedtitelzonderprod=`echo $titelgefixt|sed -e "s/$liedtitelzonderprodsed//"`
+		fi
+
+		persoonlijst=`echo $persoonlijst|sed -e "s/x //"`
+		if [[ $allerlaatstewoord == "#"* ]]; then
+			if [[ $persoonlijst == *" x "* ]]; then
+				persoonlijstrev=`echo $persoonlijst|rev`
+				allerlaatstewoordrev=`echo $allerlaatstewoord|rev`
+				groepnaamzonderlaatsehekje=`echo $persoonlijstrev|sed -e "s/$allerlaatstewoordrev //"|rev`
+				if [[ $groepnaamzonderlaatsehekje == "#"* ]]; then
+					eerstewoordhekje=`echo "$groepnaamzonderlaatsehekje"|awk 'BEGIN {FS=" "}{print $1}'`
+					groepzondereersteenlaatstehekje=`echo "$groepnaamzonderlaatsehekje"|sed -e "s/$eerstewoordhekje //"`
+					verbeterdartiest=`echo "$eerstewoordhekje $allerlaatstewoord $groepzondereersteenlaatstehekje"`
+					echo $verbeterdartiest
+				fi
+			else
+				verbeterdartiest=$persoonlijst	
+			fi
+		else
+			verbeterdartiest=$persoonlijst
+		fi
+		eerstewoord=`echo $verbeterdartiest|awk 'BEGIN {FS=" "}{print $1}'`
+		tweedewoord=`echo $verbeterdartiest|awk 'BEGIN {FS=" "}{print $2}'`
+		derdewoord=`echo $verbeterdartiest|awk 'BEGIN {FS=" "}{print $3}'`
+		if [[ $derdewoord == "" ]]; then
+			if [[ $tweedewoord == "#"* ]]; then
+				tijdelijkwoord=$tweedewoord
+				tweedewoord=$eerstewoord
+				eerstewoord=$tijdelijkwoord
+				verbeterdartiest=`echo "$eerstewoord $tweedewoord"`
+			fi
+		fi
+		if [[ $tweedewoord == "" ]]; then
+			eerstetweewoorden=`echo $eerstewoord`
+		else
+			eerstetweewoorden=`echo "$eerstewoord $tweedewoord"`
+		fi
+		if [[ $eerstewoord != "#"* ]]; then
+			getalhoelangtweedewoord=`echo $tweedewoord|wc -c|sed -e "s/ //g"`
+			getalhoelangtweedewoord=$(( getalhoelangtweedewoord - 1 ))
+			if [[ $getalhoelangtweedewoord != 1 ]]; then
+				getalhoelangeerstewoord=`echo $eerstewoord|wc -c|sed -e "s/ //g"`
+				getalhoelangeerstewoord=$(( getalhoelangeerstewoord - 1 ))
+				if [[ $getalhoelangeerstewoord == 1 ]]; then
+					gedetecteerdewhitelistartist=1
 				else
-					verbeterdartiest=$persoonlijst	
-				fi
-			else
-				verbeterdartiest=$persoonlijst
-			fi
-			eerstewoord=`echo $verbeterdartiest|awk 'BEGIN {FS=" "}{print $1}'`
-			tweedewoord=`echo $verbeterdartiest|awk 'BEGIN {FS=" "}{print $2}'`
-			derdewoord=`echo $verbeterdartiest|awk 'BEGIN {FS=" "}{print $3}'`
-			if [[ $derdewoord == "" ]]; then
-				if [[ $tweedewoord == "#"* ]]; then
-					tijdelijkwoord=$tweedewoord
-					tweedewoord=$eerstewoord
-					eerstewoord=$tijdelijkwoord
-					verbeterdartiest=`echo "$eerstewoord $tweedewoord"`
-				fi
-			fi
-			if [[ $tweedewoord == "" ]]; then
-				eerstetweewoorden=`echo $eerstewoord`
-			else
-				eerstetweewoorden=`echo "$eerstewoord $tweedewoord"`
-			fi
-			if [[ $eerstewoord != "#"* ]]; then
-				getalhoelangtweedewoord=`echo $tweedewoord|wc -c|sed -e "s/ //g"`
-				getalhoelangtweedewoord=$(( getalhoelangtweedewoord - 1 ))
-				if [[ $getalhoelangtweedewoord != 1 ]]; then
-					getalhoelangeerstewoord=`echo $eerstewoord|wc -c|sed -e "s/ //g"`
-					getalhoelangeerstewoord=$(( getalhoelangeerstewoord - 1 ))
-					if [[ $getalhoelangeerstewoord == 1 ]]; then
-						gedetecteerdewhitelistartist=1
-					else
-						blacklistaf=`cat ~/Documents/youtube-dl/.black.list|sed -e "s|'|\\\\\'|"|xargs`
-						blacklist=($blacklistaf)
+					blacklistaf=`cat ~/Documents/youtube-dl/.black.list|sed -e "s|'|\\\\\'|"|xargs`
+					blacklist=($blacklistaf)
+					artistlowercap=`echo $verbeterdartiest|tr '[:upper:]' '[:lower:]'`
+					for t in ${blacklist[@]}; do
+						if [[ $gedetecteerdeblacklistartist != 1 ]]; then
+							if [[ "$artistlowercap" == "$t"* ]]; then
+								gedetecteerdeblacklistartist=1
+							fi
+						fi
+					done
+					if [[ $gedetecteerdeblacklistartist != 1 ]]; then
+						whitelistaf=`cat ~/Documents/youtube-dl/.white.list|sed -e "s|'|\\\\\'|"|xargs`
+						whitelist=($whitelistaf)
 						artistlowercap=`echo $verbeterdartiest|tr '[:upper:]' '[:lower:]'`
-						for t in ${blacklist[@]}; do
-							if [[ $gedetecteerdeblacklistartist != 1 ]]; then
-								if [[ "$artistlowercap" == "$t"* ]]; then
-									gedetecteerdeblacklistartist=1
+						for t in ${whitelist[@]}; do
+							if [[ $gedetecteerdewhitelistartist != 1 ]]; then
+								whitelistartiest=`echo $t|sed -e "s/_/ /"`
+								if [[ "$artistlowercap" == "$whitelistartiest"* ]]; then
+									gedetecteerdewhitelistartist=1
 								fi
 							fi
 						done
-						if [[ $gedetecteerdeblacklistartist != 1 ]]; then
-							whitelistaf=`cat ~/Documents/youtube-dl/.white.list|sed -e "s|'|\\\\\'|"|xargs`
-							whitelist=($whitelistaf)
-							artistlowercap=`echo $verbeterdartiest|tr '[:upper:]' '[:lower:]'`
-							for t in ${whitelist[@]}; do
-								if [[ $gedetecteerdewhitelistartist != 1 ]]; then
-									whitelistartiest=`echo $t|sed -e "s/_/ /"`
-									if [[ "$artistlowercap" == "$whitelistartiest"* ]]; then
-										gedetecteerdewhitelistartist=1
-									fi
-								fi
-							done
+					fi
+					if [[ $minr == 1 ]]; then	
+						gedetecteerdewhitelistartist=1
+					else
+						if [[ $tweedewoord == "x" ]]||[[ $tweedewoord == "X"* ]]; then
+						gedetecteerdewhitelistartist=1
 						fi
-						if [[ $minr == 1 ]]; then	
-							gedetecteerdewhitelistartist=1
-						else
-							if [[ $tweedewoord == "x" ]]||[[ $tweedewoord == "X"* ]]; then
-							gedetecteerdewhitelistartist=1
-							fi
-							if [[ $gedetecteerdewhitelistartist != 1 ]];then 
-								if [[ $gedetecteerdeblacklistartist != 1 ]]; then
-									artistspatiecheck=`echo $eerstetweewoorden|rev`
+						if [[ $gedetecteerdewhitelistartist != 1 ]];then 
+							if [[ $gedetecteerdeblacklistartist != 1 ]]; then
+								artistspatiecheck=`echo $eerstetweewoorden|rev`
 
-									if [[ $tweedewoord == "" ]]; then
+								if [[ $tweedewoord == "" ]]; then
+									gedetecteerdewhitelistartist=1
+								else
+									echo -e "\nis \"$eerstetweewoorden\" een persoon (1) of een groep met een persoon er achter (2)? of is de titel gewoon fucked? (3) | (1/2/3)"
+									read persoonofgroep
+									if [[ $persoonofgroep == 1 ]]; then
+										#een persoon
+										echo $eerstetweewoorden|sed -e "s/ /_/"|tr '[:upper:]' '[:lower:]' >> ~/Documents/youtube-dl/.white.list
 										gedetecteerdewhitelistartist=1
-									else
-										echo -e "\nis \"$eerstetweewoorden\" een persoon (1) of een groep met een persoon er achter (2)? of is de titel gewoon fucked? (3) | (1/2/3)"
-										read persoonofgroep
-										if [[ $persoonofgroep == 1 ]]; then
-											#een persoon
-											echo $eerstetweewoorden|sed -e "s/ /_/"|tr '[:upper:]' '[:lower:]' >> ~/Documents/youtube-dl/.white.list
-											gedetecteerdewhitelistartist=1
-										fi
-										if [[ $persoonofgroep == 2 ]]; then
-											#een groep
-											echo $eerstewoord|tr '[:upper:]' '[:lower:]' >> ~/Documents/youtube-dl/.black.list
-											gedetecteerdeblacklistartist=1
-										fi
-										if [[ $persoonofgroep == 3 ]]; then
-											gedetecteerdewhitelistartist=1
-										fi
+									fi
+									if [[ $persoonofgroep == 2 ]]; then
+										#een groep
+										echo $eerstewoord|tr '[:upper:]' '[:lower:]' >> ~/Documents/youtube-dl/.black.list
+										gedetecteerdeblacklistartist=1
+									fi
+									if [[ $persoonofgroep == 3 ]]; then
+										gedetecteerdewhitelistartist=1
 									fi
 								fi
 							fi
 						fi
 					fi
-					if [[ $gedetecteerdeblacklistartist == 1 ]]; then
-						allesbehalveeerstewoord=`echo $verbeterdartiest|sed -e "s/$eerstewoord//"`
-						verbeterdartiest=`echo "#$verbeterdartiest"`
-					fi
+				fi
+				if [[ $gedetecteerdeblacklistartist == 1 ]]; then
+					allesbehalveeerstewoord=`echo $verbeterdartiest|sed -e "s/$eerstewoord//"`
+					verbeterdartiest=`echo "#$verbeterdartiest"`
 				fi
 			fi
-			hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
-			n=0
-			while [ "$n" -lt $hoeveelgroepen ]; do
-				groepnognietgevonden=0
-				n=$(( n + 1 ))
-				nt=$(( n + 1 ))
-				huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
-				cat ~/Documents/youtube-dl/.black.list |grep -i "$huidigegroep" &>/dev/null||groepnognietgevonden=1
-				if [[ $groepnognietgevonden == 1 ]]; then
-					if [[ $lijstvoorshow == "" ]]; then
-						echo -e ""
-					fi
-					echo $huidigegroep|tr [:upper:] [:lower:] >> ~/Documents/youtube-dl/.black.list
-					echo "Groep aan lijst toegevoegd: $huidigegroep "
-					lijstvoorshow=`echo "$lijstvoorshow $huidigegroep"`
+		fi
+		hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
+		n=0
+		while [ "$n" -lt $hoeveelgroepen ]; do
+			groepnognietgevonden=0
+			n=$(( n + 1 ))
+			nt=$(( n + 1 ))
+			huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
+			cat ~/Documents/youtube-dl/.black.list |grep -i "$huidigegroep" &>/dev/null||groepnognietgevonden=1
+			if [[ $groepnognietgevonden == 1 ]]; then
+				if [[ $lijstvoorshow == "" ]]; then
+					echo -e ""
 				fi
+				echo $huidigegroep|tr [:upper:] [:lower:] >> ~/Documents/youtube-dl/.black.list
+				echo "Groep aan lijst toegevoegd: $huidigegroep "
+				lijstvoorshow=`echo "$lijstvoorshow $huidigegroep"`
+			fi
+		done
+		if [[ $lijstvoorshow != "" ]]; then
+			lijstvoorshow=`echo "$lijstvoorshow"|sed -e "s/ //"`
+			echo $lijstvoorshow|tr [:upper:] [:lower:] > ~/Documents/youtube-dl/.vorigegroepen.list
+			echo -e "\nals je deze groepen weer wilt verwijderen doe dan youtubedl -d"
+		fi
+		artiestarray=($verbeterdartiest)
+		for i in  ${artiestarray[@]}; do
+			while [[ $i == *"#"* ]]; do
+				i=`echo $i|sed -e "s/#//"`
 			done
-			if [[ $lijstvoorshow != "" ]]; then
-				lijstvoorshow=`echo "$lijstvoorshow"|sed -e "s/ //"`
-				echo $lijstvoorshow|tr [:upper:] [:lower:] > ~/Documents/youtube-dl/.vorigegroepen.list
-				echo -e "\nals je deze groepen weer wilt verwijderen doe dan youtubedl -d"
+			ilowercase=`echo $i|tr [:upper:] [:lower:]`
+			grep -Rn "^$ilowercase$" ~/Documents/youtube-dl/.black.list &> /dev/null && verbeterdartiest=`echo $verbeterdartiest|sed -e "s|$i|#$i|g"`
+		done
+		laatstewoordvanartiest=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
+		laatstewoordvanartiestrev=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'`
+		if [[ $liedtitel == "" ]]; then
+			liedtitelzonderprod=`echo $titel`
+			artiestnaam=`echo $account|awk 'BEGIN{FS=" - "}{print $1}'`
+		fi
+		if [[ $minr == 1 ]]; then
+			liedtitelzonderprod=$titel
+			verbeterdartiest=`echo $account|awk 'BEGIN {FS=" - "}{print $1}'`
+		fi
+		mv "$filenaamverbeterd" ~/Documents/youtube-dl/.tijdelijk.mp3 &> /dev/null
+		if [[ $genre == "" ]]; then
+			genre=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^GENRE"|sed -e "s/GENRE=//"`
+		fi
+		# if [[ $genre == "" ]]; then		
+		# 	ls ~/Documents/youtube-dl/.genre  &> /dev/null || noggeengenre=1
+		# 	if [[ $noggeengenre == 1 ]]; then
+		# 		echo "Naar welke genre zul je het meeste luisteren? (Dit wordt de standaard genre tenzei je een speciafieke selecteerd met argumenten)"
+		# 		read genre
+		# 		if [[ $? == 130 ]]; then
+		# 			genre="-Onbekend-"
+		# 		fi
+		# 		echo "$genre" > ~/Documents/youtube-dl/.genre
+		# 	fi
+		# 	if [[ $genre != "-Onbekend-" ]]; then
+		# 		genre=`cat ~/Documents/youtube-dl/.genre`	
+		# 	fi
+		# fi
+		while [[ $verbeterdartiest == *"##"* ]]; do
+			verbeterdartiest=`echo $verbeterdartiest|sed -e "s/##/#/"`
+		done
+		while [[ $verbeterdartiest == *"  "* ]]; do
+			verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
+		done
+		if [[ $image == 0 ]]; then
+			if [[ $prodintitel == "1" ]]; then
+				if [[ $engeneer == "@"* ]]; then
+					engeneer=`echo $engeneer|sed -e "s/@//"`
+				fi
+				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
+				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
+			else
+				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="-Onbekend-" -c copy "$filenaamverbeterd"  &> /dev/null
+				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null
 			fi
-			artiestarray=($verbeterdartiest)
-			for i in  ${artiestarray[@]}; do
-				while [[ $i == *"#"* ]]; do
-					i=`echo $i|sed -e "s/#//"`
+		fi
+		#url='https://www.youtube.com/watch?v=TANqz4RE3iM'
+		#url=https://www.youtube.com/watch\?v\=PymeZOTSt7Q\&list\=LL\&index\=1
+		if [[ $instaurl != "" ]]; then
+			if [[ $image == 0 ]]; then	
+				if [[ $instaurl == "vid" ]]; then
+					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+				else
+					typeurl=`echo $instaurl|sed -e "s|https://||"`
+					if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
+						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
+					else
+						if [[ $typeurl == "www.instagram.com"* ]]; then
+							instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
+							#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
+							fotocrop
+							rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
+						else
+							if [[ -f $instaurl ]]; then
+								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
+								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
+									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
+									fotocrop
+								else
+									echo "File type niet ondersteund, eigen video wordt gebruikt"
+									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+								fi 
+							else
+								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								fotokeuze=1
+								if [[ $fotokeuze == 1 ]]; then
+									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+									if [[ $fotokeuze != 2 ]]; then
+										fotocrop
+									fi		
+								fi
+								if [[ $fotokeuze == 2 ]]; then
+									echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+								fi
+							fi
+						fi
+					fi
+				fi
+				hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
+				n=0
+				while [ "$n" -lt $hoeveelgroepen ]; do
+					n=$(( n + 1 ))
+					nt=$(( n + 1 ))
+					huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
+					lijst=`echo "$lijst $huidigegroep"` 
 				done
-				ilowercase=`echo $i|tr [:upper:] [:lower:]`
-				grep -Rn "^$ilowercase$" ~/Documents/youtube-dl/.black.list &> /dev/null && verbeterdartiest=`echo $verbeterdartiest|sed -e "s|$i|#$i|g"`
-			done
-			laatstewoordvanartiest=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
-			laatstewoordvanartiestrev=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'`
-			if [[ $liedtitel == "" ]]; then
-				liedtitelzonderprod=`echo $titel`
-				artiestnaam=`echo $account|awk 'BEGIN{FS=" - "}{print $1}'`
-			fi
-			if [[ $minr == 1 ]]; then
-				liedtitelzonderprod=$titel
-				verbeterdartiest=`echo $account|awk 'BEGIN {FS=" - "}{print $1}'`
-			fi
-			mv "$filenaamverbeterd" ~/Documents/youtube-dl/.tijdelijk.mp3 &> /dev/null
-			cat ~/Documents/youtube-dl/.config.yt|grep -i "^GANRE"
-			if [[ $genre == "" ]]; then		
-				ls ~/Documents/youtube-dl/.genre  &> /dev/null || noggeengenre=1
-				if [[ $noggeengenre == 1 ]]; then
-					echo "Naar welke genre zul je het meeste luisteren? (Dit wordt de standaard genre tenzei je een speciafieke selecteerd met argumenten)"
-					read genre
-					if [[ $? == 130 ]]; then
-						genre="-Onbekend-"
-					fi
-					echo "$genre" > ~/Documents/youtube-dl/.genre
-				fi
-				if [[ $genre != "-Onbekend-" ]]; then
-					genre=`cat ~/Documents/youtube-dl/.genre`	
-				fi
-			fi
-			while [[ $verbeterdartiest == *"##"* ]]; do
-				verbeterdartiest=`echo $verbeterdartiest|sed -e "s/##/#/"`
-			done
-			while [[ $verbeterdartiest == *"  "* ]]; do
-				verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
-			done
-			if [[ $image == 0 ]]; then
-				if [[ $prodintitel == "1" ]]; then
-					if [[ $engeneer == "@"* ]]; then
-						engeneer=`echo $engeneer|sed -e "s/@//"`
-					fi
-					avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
-					rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
-				else
-					avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="-Onbekend-" -c copy "$filenaamverbeterd"  &> /dev/null
-					rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null
-				fi
-			fi
-			if [[ $instaurl != "" ]]; then
-				if [[ $image == 0 ]]; then	
-					if [[ $instaurl == "vid" ]]; then
-						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-					else
-						typeurl=`echo $instaurl|sed -e "s|https://||"`
-						if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
-							wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
-						else
-							if [[ $typeurl == "www.instagram.com"* ]]; then
-								instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
-								#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
-								fotocrop
-								rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
-							else
-								if [[ -f $instaurl ]]; then
-									instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
-									if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-										cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
-										fotocrop
-									else
-										echo "File type niet ondersteund, eigen video wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-									fi 
-								else
-									echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
-									fotokeuze=1
-									if [[ $fotokeuze == 1 ]]; then
-										wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
-										if [[ $fotokeuze != 2 ]]; then
-											fotocrop
-										fi		
-									fi
-									if [[ $fotokeuze == 2 ]]; then
-										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
-									fi
-								fi
-							fi
-						fi
-					fi
-					hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
-					n=0
-					while [ "$n" -lt $hoeveelgroepen ]; do
-						n=$(( n + 1 ))
-						nt=$(( n + 1 ))
-						huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
-						lijst=`echo "$lijst $huidigegroep"` 
-					done
-					lijst=`echo "$lijst"|sed -e "s/ //"`
-					lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
-					artiesttitelzondergroep=`echo $verbeterdartiest`
-					for f in ${lijst2[@]}; do
-						artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
-					done
-					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-					echtgedaan=0
-					while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-						convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
-						caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
-						if [[ $caractertitel -gt 17 ]]; then
-							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
-						else
-							titelvergrotingsfactor=156
-						fi
-						convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
-						#echo -ne "\r"
-						rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
-						eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
-						rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-					touch ~/Documents/youtube-dl/.gedaan
-					sleep .2
-					rm ~/Documents/youtube-dl/.gedaan
-					echo -ne "\rThumbnail gegenereerd.                                            "
-					eenwhileloopgebeurt=1
-				else
-					#########################
-					if [[ $instaurl == "vid" ]]; then
-						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl 2>/dev/null` &> /dev/null
-					else
-						typeurl=`echo $instaurl|sed -e "s|https://||"`
-						if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
-							wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
-						else
-							if [[ $typeurl == "www.instagram.com"* ]]; then
-								instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
-								#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
-								fotocrop
-								rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
-							else
-								if [[ -f $instaurl ]]; then
-									instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
-									if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-										cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
-										fotocrop
-									else
-										echo "File type niet ondersteund, eigen video wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-									fi 
-								else
-									echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
-									fotokeuze=1
-									if [[ $fotokeuze == 1 ]]; then
-										wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
-										if [[ $fotokeuze != 2 ]]; then
-											fotocrop
-										fi		
-									fi
-									if [[ $fotokeuze == 2 ]]; then
-										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
-									fi
-								fi
-							fi
-						fi
-					fi
-					hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
-					n=0
-					while [ "$n" -lt $hoeveelgroepen ]; do
-						n=$(( n + 1 ))
-						nt=$(( n + 1 ))
-						huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
-						lijst=`echo "$lijst $huidigegroep"` 
-					done
-					lijst=`echo "$lijst"|sed -e "s/ //"`
-					lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
-					artiesttitelzondergroep=`echo $verbeterdartiest`
-					for f in ${lijst2[@]}; do
-						artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
-					done
-					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-					echtgedaan=0
-					while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-						convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
-						caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
-						if [[ $caractertitel -gt 17 ]]; then
-							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
-						else
-							titelvergrotingsfactor=156
-						fi
-						convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
-						#echo -ne "\r"
-						rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
-					touch ~/Documents/youtube-dl/.gedaan
-					sleep .2
-					rm ~/Documents/youtube-dl/.gedaan
-					echo -ne "\rThumbnail gegenereerd.                                            "
-					echo gedaan
-					exit
-					#########################
-				fi
-			fi
-			if [[ $enhansedaudio == "true" ]]; then
+				lijst=`echo "$lijst"|sed -e "s/ //"`
+				lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
+				artiesttitelzondergroep=`echo $verbeterdartiest`
+				for f in ${lijst2[@]}; do
+					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
+				done
+				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
 				echtgedaan=0
-				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		Audio aan het Enhansen      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					#huidigdb=`ffmpeg -i "$filenaamverbeterd" -af "volumedetect" -vn -sn -dn -f null /dev/null &>tijdelijk.txt;cat tijdelijk.txt|tail -3|head -1|awk 'BEGIN {FS="mean_volume: "}{print $2}'|sed -e "s/-//";rm tijdelijk.txt`;huidigdb=`echo ${huidigdb:0:2}`
-					if [[ $volumepc != "" ]]; then
-						volumepc=`bc <<< "scale=2; $volumepc/100"`
-						mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-						ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" -b:a 320k "$filenaamverbeterd" &>/dev/null
-						rm ~/Documents/youtube-dl/outfile.mp3 &>/dev/null
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
+					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
+					if [[ $caractertitel -gt 17 ]]; then
+						huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
+						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
 					else
-						mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-						ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -b:a 320k "$filenaamverbeterd"	&>/dev/null
-						rm ~/Documents/youtube-dl/outfile.mp3 &>/dev/null
+						titelvergrotingsfactor=156
 					fi
-					#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -af "volume=9dB" -ab 320k "$filenaamverbeterd" &>/dev/null
-					#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a loudnorm -ab 320k "$filenaamverbeterd" &>/dev/null
+					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+					#echo -ne "\r"
+					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
+					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .2
 				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rAudio enhansed.                                            "
+				echo -ne "\rThumbnail gegenereerd.                                            "
 				eenwhileloopgebeurt=1
 			else
+				#########################
+				if [[ $instaurl == "vid" ]]; then
+					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl 2>/dev/null` &> /dev/null
+				else
+					typeurl=`echo $instaurl|sed -e "s|https://||"`
+					if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
+						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
+					else
+						if [[ $typeurl == "www.instagram.com"* ]]; then
+							instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
+							#Download only selected images of a sidecar. You can select single images using their index in the sidecar starting with the leftmost or you can specify a range of images with the following syntax: start_index-end_index. Example: --slide 1 will select only the first image, --slide last only the last one and --slide 1-3 will select only the first three images.
+							fotocrop
+							rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
+						else
+							if [[ -f $instaurl ]]; then
+								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
+								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
+									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
+									fotocrop
+								else
+									echo "File type niet ondersteund, eigen video wordt gebruikt"
+									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+								fi 
+							else
+								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								fotokeuze=1
+								if [[ $fotokeuze == 1 ]]; then
+									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+									if [[ $fotokeuze != 2 ]]; then
+										fotocrop
+									fi		
+								fi
+								if [[ $fotokeuze == 2 ]]; then
+									echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+								fi
+							fi
+						fi
+					fi
+				fi
+				hoeveelgroepen=$((`echo "$verbeterdartiest"| awk -F"#" '{print NF-1}'`))
+				n=0
+				while [ "$n" -lt $hoeveelgroepen ]; do
+					n=$(( n + 1 ))
+					nt=$(( n + 1 ))
+					huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
+					lijst=`echo "$lijst $huidigegroep"` 
+				done
+				lijst=`echo "$lijst"|sed -e "s/ //"`
+				lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
+				artiesttitelzondergroep=`echo $verbeterdartiest`
+				for f in ${lijst2[@]}; do
+					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
+				done
+				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+				echtgedaan=0
+				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
+					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
+					if [[ $caractertitel -gt 17 ]]; then
+						huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
+						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
+					else
+						titelvergrotingsfactor=156
+					fi
+					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					#echo -ne "\r"
+					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+				touch ~/Documents/youtube-dl/.gedaan
+				sleep .2
+				rm ~/Documents/youtube-dl/.gedaan
+				echo -ne "\rThumbnail gegenereerd.                                            "
+				echo gedaan
+				exit
+				#########################
+			fi
+		fi
+		if [[ $enhansedaudio == "true" ]]; then
+			echtgedaan=0
+			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		Audio aan het Enhansen      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				#huidigdb=`ffmpeg -i "$filenaamverbeterd" -af "volumedetect" -vn -sn -dn -f null /dev/null &>tijdelijk.txt;cat tijdelijk.txt|tail -3|head -1|awk 'BEGIN {FS="mean_volume: "}{print $2}'|sed -e "s/-//";rm tijdelijk.txt`;huidigdb=`echo ${huidigdb:0:2}`
 				if [[ $volumepc != "" ]]; then
 					volumepc=`bc <<< "scale=2; $volumepc/100"`
 					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-					ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" "$filenaamverbeterd"
-				fi
-			fi
-			genre=`cat Documents/youtube-dl/.config.yt|grep -i "^GANRE"`
-			if [[ $eindesec != "" ]]; then
-				if [[ $eindesec == *":"* ]]; then
-					fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
-					eindesec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $1}'`
-					eindemin=`echo $eindesec|awk 'BEGIN {FS=":"}{print $1}'`
-					eindesec=`echo $eindesec|awk 'BEGIN {FS=":"}{print $2}'`
-					fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
-					if [[ $fadeoutsec == "" ]]; then
-						fadeoutsec=3
-					fi
-					if [[ $eindesec == "0"* ]]; then
-					 	eindesec=`echo $eindesec|sed -e "s/0//"`
-					fi
-					eindesec=$(( eindemin * 60 + eindesec ))
-				fi
-				echtgedaan=0
-				echo ""
-				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+					ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" -b:a 320k "$filenaamverbeterd" &>/dev/null
+					rm ~/Documents/youtube-dl/outfile.mp3 &>/dev/null
+				else
 					mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-					avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
-					if [[ $fadeoutsec != 0 ]]; then
+					ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -b:a 320k "$filenaamverbeterd"	&>/dev/null
+					rm ~/Documents/youtube-dl/outfile.mp3 &>/dev/null
+				fi
+				#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -af "volume=9dB" -ab 320k "$filenaamverbeterd" &>/dev/null
+				#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a loudnorm -ab 320k "$filenaamverbeterd" &>/dev/null
+			touch ~/Documents/youtube-dl/.gedaan
+			sleep .2
+			rm ~/Documents/youtube-dl/.gedaan
+			echo -ne "\rAudio enhansed.                                            "
+			eenwhileloopgebeurt=1
+		else
+			if [[ $volumepc != "" ]]; then
+				volumepc=`bc <<< "scale=2; $volumepc/100"`
+				mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+				ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" "$filenaamverbeterd"
+			fi
+		fi
+		genre=`cat Documents/youtube-dl/.config.yt|grep -i "^GANRE"`
+		if [[ $eindesec != "" ]]; then
+			if [[ $eindesec == *":"* ]]; then
+				fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
+				eindesec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $1}'`
+				eindemin=`echo $eindesec|awk 'BEGIN {FS=":"}{print $1}'`
+				eindesec=`echo $eindesec|awk 'BEGIN {FS=":"}{print $2}'`
+				fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
+				if [[ $fadeoutsec == "" ]]; then
+					fadeoutsec=3
+				fi
+				if [[ $eindesec == "0"* ]]; then
+				 	eindesec=`echo $eindesec|sed -e "s/0//"`
+				fi
+				eindesec=$(( eindemin * 60 + eindesec ))
+			fi
+			echtgedaan=0
+			echo ""
+			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+				avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
+				if [[ $fadeoutsec != 0 ]]; then
+					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+					sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h 0 -0 "$fadeoutsec" &> /dev/null 
+					ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+					rm "$filenaamverbeterd" &> /dev/null
+					mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd" &> /dev/null
+					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null	
+				fi
+				rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
+			touch ~/Documents/youtube-dl/.gedaan
+			sleep .2
+			rm ~/Documents/youtube-dl/.gedaan
+			echo -ne "\rAudio bijgesneden                                            "
+			eenwhileloopgebeurt=1
+		fi
+		minuut=0
+		sec=0
+		secondenadubbelepunt=0
+		if [[ $tweedelied != "" ]]; then
+			if [[ $tweedelied == *" "* ]]; then
+				begintweedelied=`echo $tweedelied|awk 'BEGIN {FS=" "}{print $2}'`
+				tweedelied=`echo $tweedelied|awk 'BEGIN {FS=" "}{print $1}'`
+			fi
+			if [[ $tweedelied == *":"* ]]; then
+				minuut=`echo $tweedelied|awk 'BEGIN {FS=":"}{print $1}'`
+				secondenadubbelepunt=`echo $tweedelied|awk 'BEGIN {FS=":"}{print $2}'`
+				if [[ $secondenadubbelepunt == "0"* ]]; then
+					secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
+				fi
+				minuutinsec=$(( minuut * 60 ))
+				sec=$(( secondenadubbelepunt + minuutinsec ))
+			else
+				sec=$tweedelied
+			fi
+			titelpt1=`echo "$liedtitelzonderprod PT: 1"`
+			titelpt2=`echo "$liedtitelzonderprod PT: 2"`
+			if [[ $engeneer != "" ]]; then
+				if [[ $engeneer == *" & "* ]]; then
+					engeneer1=`echo "$engeneer"|awk 'BEGIN {FS=" & "}{print $1}'`
+					engeneer2=`echo "$engeneer"|awk 'BEGIN {FS=" & "}{print $2}'`
+				else
+					engeneer1=$engeneer
+					engeneer2=$engeneer
+				fi
+			else
+				engeneer1="-Onbekend-"
+				engeneer2="-Onbekend-"
+			fi
+			filenaamverbeterdpt1=`echo $filenaamverbeterd|rev|sed -e "s|3pm.|3pm.1 -TP |"|rev`
+			filenaamverbeterdpt2=`echo $filenaamverbeterd|rev|sed -e "s|3pm.|3pm.2 -TP |"|rev`
+			if [[ $begintweedelied != "" ]]; then
+				if [[ $begintweedelied == *":"* ]]; then
+					minuut=`echo $begintweedelied|awk 'BEGIN {FS=":"}{print $1}'`
+					secondenadubbelepunt=`echo $begintweedelied|awk 'BEGIN {FS=":"}{print $2}'`
+					if [[ $secondenadubbelepunt == "0"* ]]; then
+						secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
+					fi
+					minuutinsec=$(( minuut * 60 ))
+					sectwee=$(( secondenadubbelepunt + minuutinsec ))
+				else
+					sectwee=$tweedelied
+				fi	
+			else
+				sectwee="$sec"
+			fi
+			echtgedaan=0
+			echo ""
+			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het splitten     "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				/bin/ls "$filenaamverbeterdpt1" &> /dev/null && rm "$filenaamverbeterdpt1" &> /dev/null
+				/bin/ls "$filenaamverbeterdpt2" &> /dev/null && rm "$filenaamverbeterdpt2" &> /dev/null
+				avconv -i "$filenaamverbeterd" -t $sec -metadata title="$titelpt1" -c copy "$filenaamverbeterdpt1" &> /dev/null
+				avconv -i "$filenaamverbeterd" -ss $sectwee -metadata title="$titelpt2" -c copy "$filenaamverbeterdpt2" &> /dev/null
+				sox "$filenaamverbeterdpt2" ~/Documents/youtube-dl/outputfade2.mp3 fade h 3 -0 0 &> /dev/null
+				rm "$filenaamverbeterdpt2" &> /dev/null
+				ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade2.mp3 -map 1 -map_metadata 0 -metadata title="$titelpt2" -metadata composer="$engeneer2" -c copy -movflags use_metadata_tags "$filenaamverbeterdpt2" &> /dev/null
+				ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+				eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt2" &> /dev/null
+				sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade1.mp3 fade h 0 -0 3 &> /dev/null
+				rm "$filenaamverbeterdpt1" &> /dev/null
+				ffmpeg -i "$filenaamverbeterdpt2" -i ~/Documents/youtube-dl/outputfade1.mp3 -map 1 -map_metadata 0 -metadata title="$titelpt1" -metadata composer="$engeneer1" -c copy -movflags use_metadata_tags "$filenaamverbeterdpt1" &> /dev/null
+				eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+				rm ~/Documents/youtube-dl/file.jpg "$filenaamverbeterd" &> /dev/null
+				rm ~/Documents/youtube-dl/outputfade1.mp3 ~/Documents/youtube-dl/outputfade2.mp3 &> /dev/null
+				tweedeliedcheck=1
+			touch ~/Documents/youtube-dl/.gedaan
+			sleep .2
+			rm ~/Documents/youtube-dl/.gedaan
+			echo -ne "\rSplitten gedaan                                            "
+			eenwhileloopgebeurt=1
+		fi
+		minuut=0
+		sec=""
+		secondenadubbelepunt=0
+		if [[ $seconde != "" ]]; then
+			if [[ $seconde == *":"* ]]; then
+				minuut=`echo $seconde|awk 'BEGIN {FS=":"}{print $1}'`
+				secondenadubbelepunt=`echo $seconde|awk 'BEGIN {FS=":"}{print $2}'`
+				if [[ $secondenadubbelepunt == "0"* ]]; then
+					secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
+				fi
+				minuutinsec=$(( minuut * 60 ))
+				seconde=$(( secondenadubbelepunt + minuutinsec ))
+			fi
+			fadeinsec=`echo $seconde|awk 'BEGIN {FS="|"}{print $2}'`
+			if [[ $fadeinsec == "" ]]; then
+				fadeinsec=2
+			fi
+			echtgedaan=0
+			echo ""
+			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
+				if [[ $tweedelied != "" ]]; then
+					ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+					avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
+					rm "$filenaamverbeterdpt1" &> /dev/null
+					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
+					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
+					if [[ $fadeinsec != 0 ]]; then
+					 	ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+					 	sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+						ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+						rm "$filenaamverbeterdpt1" &> /dev/null
+						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
+						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+					fi 
+					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
+				else
+					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+					avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
+					rm "$filenaamverbeterd" &> /dev/null
+					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
+					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
+					if [[ $fadeinsec != 0 ]]; then
 						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h 0 -0 "$fadeoutsec" &> /dev/null 
+						sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
 						ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
 						rm "$filenaamverbeterd" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd" &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null	
+						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
+						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
 					fi
 					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
-				touch ~/Documents/youtube-dl/.gedaan
-				sleep .2
-				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rAudio bijgesneden                                            "
-				eenwhileloopgebeurt=1
-			fi
-			minuut=0
-			sec=0
-			secondenadubbelepunt=0
-			if [[ $tweedelied != "" ]]; then
-				if [[ $tweedelied == *" "* ]]; then
-					begintweedelied=`echo $tweedelied|awk 'BEGIN {FS=" "}{print $2}'`
-					tweedelied=`echo $tweedelied|awk 'BEGIN {FS=" "}{print $1}'`
 				fi
-				if [[ $tweedelied == *":"* ]]; then
-					minuut=`echo $tweedelied|awk 'BEGIN {FS=":"}{print $1}'`
-					secondenadubbelepunt=`echo $tweedelied|awk 'BEGIN {FS=":"}{print $2}'`
-					if [[ $secondenadubbelepunt == "0"* ]]; then
-						secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
-					fi
-					minuutinsec=$(( minuut * 60 ))
-					sec=$(( secondenadubbelepunt + minuutinsec ))
-				else
-					sec=$tweedelied
-				fi
-				titelpt1=`echo "$liedtitelzonderprod PT: 1"`
-				titelpt2=`echo "$liedtitelzonderprod PT: 2"`
-				if [[ $engeneer != "" ]]; then
-					if [[ $engeneer == *" & "* ]]; then
-						engeneer1=`echo "$engeneer"|awk 'BEGIN {FS=" & "}{print $1}'`
-						engeneer2=`echo "$engeneer"|awk 'BEGIN {FS=" & "}{print $2}'`
-					else
-						engeneer1=$engeneer
-						engeneer2=$engeneer
-					fi
-				else
-					engeneer1="-Onbekend-"
-					engeneer2="-Onbekend-"
-				fi
-				filenaamverbeterdpt1=`echo $filenaamverbeterd|rev|sed -e "s|3pm.|3pm.1 -TP |"|rev`
-				filenaamverbeterdpt2=`echo $filenaamverbeterd|rev|sed -e "s|3pm.|3pm.2 -TP |"|rev`
-				if [[ $begintweedelied != "" ]]; then
-					if [[ $begintweedelied == *":"* ]]; then
-						minuut=`echo $begintweedelied|awk 'BEGIN {FS=":"}{print $1}'`
-						secondenadubbelepunt=`echo $begintweedelied|awk 'BEGIN {FS=":"}{print $2}'`
-						if [[ $secondenadubbelepunt == "0"* ]]; then
-							secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
-						fi
-						minuutinsec=$(( minuut * 60 ))
-						sectwee=$(( secondenadubbelepunt + minuutinsec ))
-					else
-						sectwee=$tweedelied
-					fi	
-				else
-					sectwee="$sec"
-				fi
-				echtgedaan=0
-				echo ""
-				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het splitten     "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					/bin/ls "$filenaamverbeterdpt1" &> /dev/null && rm "$filenaamverbeterdpt1" &> /dev/null
-					/bin/ls "$filenaamverbeterdpt2" &> /dev/null && rm "$filenaamverbeterdpt2" &> /dev/null
-					avconv -i "$filenaamverbeterd" -t $sec -metadata title="$titelpt1" -c copy "$filenaamverbeterdpt1" &> /dev/null
-					avconv -i "$filenaamverbeterd" -ss $sectwee -metadata title="$titelpt2" -c copy "$filenaamverbeterdpt2" &> /dev/null
-					sox "$filenaamverbeterdpt2" ~/Documents/youtube-dl/outputfade2.mp3 fade h 3 -0 0 &> /dev/null
-					rm "$filenaamverbeterdpt2" &> /dev/null
-					ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade2.mp3 -map 1 -map_metadata 0 -metadata title="$titelpt2" -metadata composer="$engeneer2" -c copy -movflags use_metadata_tags "$filenaamverbeterdpt2" &> /dev/null
-					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt2" &> /dev/null
-					sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade1.mp3 fade h 0 -0 3 &> /dev/null
-					rm "$filenaamverbeterdpt1" &> /dev/null
-					ffmpeg -i "$filenaamverbeterdpt2" -i ~/Documents/youtube-dl/outputfade1.mp3 -map 1 -map_metadata 0 -metadata title="$titelpt1" -metadata composer="$engeneer1" -c copy -movflags use_metadata_tags "$filenaamverbeterdpt1" &> /dev/null
-					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
-					rm ~/Documents/youtube-dl/file.jpg "$filenaamverbeterd" &> /dev/null
-					rm ~/Documents/youtube-dl/outputfade1.mp3 ~/Documents/youtube-dl/outputfade2.mp3 &> /dev/null
-					tweedeliedcheck=1
-				touch ~/Documents/youtube-dl/.gedaan
-				sleep .2
-				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rSplitten gedaan                                            "
-				eenwhileloopgebeurt=1
-			fi
-			minuut=0
-			sec=""
-			secondenadubbelepunt=0
-			if [[ $seconde != "" ]]; then
-				if [[ $seconde == *":"* ]]; then
-					minuut=`echo $seconde|awk 'BEGIN {FS=":"}{print $1}'`
-					secondenadubbelepunt=`echo $seconde|awk 'BEGIN {FS=":"}{print $2}'`
-					if [[ $secondenadubbelepunt == "0"* ]]; then
-						secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
-					fi
-					minuutinsec=$(( minuut * 60 ))
-					seconde=$(( secondenadubbelepunt + minuutinsec ))
-				fi
-				fadeinsec=`echo $seconde|awk 'BEGIN {FS="|"}{print $2}'`
-				if [[ $fadeinsec == "" ]]; then
-					fadeinsec=2
-				fi
-				echtgedaan=0
-				echo ""
-				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					if [[ $tweedelied != "" ]]; then
-						ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
-						rm "$filenaamverbeterdpt1" &> /dev/null
-						rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-						avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
-						if [[ $fadeinsec != 0 ]]; then
-						 	ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						 	sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-							ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-							rm "$filenaamverbeterdpt1" &> /dev/null
-							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
-							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
-						fi 
-						rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
-					else
-						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
-						rm "$filenaamverbeterd" &> /dev/null
-						rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-						avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
-						if [[ $fadeinsec != 0 ]]; then
-							ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-							sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-							ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-							rm "$filenaamverbeterd" &> /dev/null
-							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
-							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
-						fi
-						rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
-					fi
-				touch ~/Documents/youtube-dl/.gedaan
-				sleep .3
-				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rAudio bijgesneden                                            "
-				eenwhileloopgebeurt=1
-			fi
+			touch ~/Documents/youtube-dl/.gedaan
+			sleep .3
+			rm ~/Documents/youtube-dl/.gedaan
+			echo -ne "\rAudio bijgesneden                                            "
+			eenwhileloopgebeurt=1
 		fi
-		if [[ "$vofa" == "v" ]]; then
-			filenaamverbeterd=`echo "$filenaam"|sed -e "s/$typ*//"`
-			filenaamverbeterd=`echo "$filenaamverbeterd"|sed -e "s|/Documents/youtube-dl/|/Documents/youtube-dl_video/|"`
-			if [[ $typ == ".mp4" ]]; then
-				filenaamverbeterd=`echo "$filenaamverbeterd"|rev|sed -e "s/4pm.//"|rev`
+		if [[ $eenwhileloopgebeurt == 1 ]]; then
+			sleep .2
+			echo ""
+			echo -ne "\r"
+		fi
+		youtube-dl $yourl --write-sub --convert-subs srt --skip-download -o $random &>/dev/null
+		ls "$random"* &>/dev/null&&subsgeslaagd=1
+		if [[ $subsgeslaagd == 1 ]]; then
+			mv "$random"* ~/Documents/youtube-dl/lyrics.txt
+			gsed -i "s/.* --> .*//g" ~/Documents/youtube-dl/lyrics.txt
+			gsed -i '/^[[:space:]]*$/d' ~/Documents/youtube-dl/lyrics.txt
+			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
+			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
+			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
+			gsed -i "s/^.*$/&\n/" ~/Documents/youtube-dl/lyrics.txt
+			echo "wil je vertalen?"
+			read vertalen
+			if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
+				#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
+				text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src en -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
+				rm ~/Documents/youtube-dl/lyrics.txt
+				mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
 			fi
-			/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
-			#if [[ $filenaamverbeterd != *".mp4" ]]; then
-			#	filenaamverbeterd=`echo "$filenaamverbeterd.mp4"`
-			#fi
-			#ffmpeg -i "/Users/$USER/Documents/youtube-dl_video/file.jpg" ~/Documents/youtube-dl_video/file.jpg &> /dev/null
-			#rm "$filenaamverbeterd"
-			#ffmpeg -i ~/Documents/youtube-dl_video/outfile.mp4 -metadata URL="$yourl" -c copy "$filenaamverbeterd"
-			#eyeD3 --add-image="/Users/$USER/Documents/youtube-dl_video/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
-			#rm ~/Documents/youtube-dl_video/outfile.mp4
-			#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd"
+			#eyeD3 --encoding utf8 --add-lyrics ~/Documents/youtube-dl/lyrics.txt "$filenaamverbeterd" &>/dev/null
+			eyeD3 --encoding "utf8" --add-lyrics "/Users/$USER/Documents/youtube-dl/lyrics.txt" "$filenaamverbeterd" &>/dev/null
+			rm ~/Documents/youtube-dl/lyrics.txt
+		else
+			echo "subs niet beschikbaar"
 		fi
 	fi
+	if [[ "$vofa" == "v" ]]; then
+		filenaamverbeterd=`echo "$filenaam"|sed -e "s/$typ*//"`
+		filenaamverbeterd=`echo "$filenaamverbeterd"|sed -e "s|/Documents/youtube-dl/|/Documents/youtube-dl_video/|"`
+		if [[ $typ == ".mp4" ]]; then
+			filenaamverbeterd=`echo "$filenaamverbeterd"|rev|sed -e "s/4pm.//"|rev`
+		fi
+		/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
+		#if [[ $filenaamverbeterd != *".mp4" ]]; then
+		#	filenaamverbeterd=`echo "$filenaamverbeterd.mp4"`
+		#fi
+		#ffmpeg -i "/Users/$USER/Documents/youtube-dl_video/file.jpg" ~/Documents/youtube-dl_video/file.jpg &> /dev/null
+		#rm "$filenaamverbeterd"
+		#ffmpeg -i ~/Documents/youtube-dl_video/outfile.mp4 -metadata URL="$yourl" -c copy "$filenaamverbeterd"
+		#eyeD3 --add-image="/Users/$USER/Documents/youtube-dl_video/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+		#rm ~/Documents/youtube-dl_video/outfile.mp4
+		#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd"
+	fi
+fi
 if [[ $open == 1 ]]; then
 	if [[ $tweedeliedcheck == 1 ]]; then
 		open "$filenaamverbeterdpt1" "$filenaamverbeterdpt2"
@@ -1630,9 +1664,4 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 			fi
 		fi
 	fi
-fi
-if [[ $eenwhileloopgebeurt == 1 ]]; then
-	sleep .2
-	echo ""
-	echo -ne "\r"
 fi
