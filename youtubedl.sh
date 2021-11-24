@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.0.0'
-commit='Lyrics toegevoegd (beta)'
+version='4.0.1'
+commit='test + pip auto install'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -278,9 +278,13 @@ update () {
 	brewoutdatedlist=(`brew outdated|xargs`)& while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	for t in ${tools[@]}; do
 		for f in ${brewoutdatedlist[@]}; do
+			echo "$f <--- outdated bestand"
+			echo "$t <--- in de tools lijst"
 			if [[ $t == $f ]]; then
 				hoeveel1=$(( hoeveel1 + 1 ))
+				echo "hetzelfde!"
 			fi
+			echo ""
 		done
 	done
 	for t in ${tools[@]}; do
