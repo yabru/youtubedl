@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.0.1'
-commit='test + pip auto install'
+version='4.0.2'
+commit='bugfix voor filenaam die veranderde'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -267,36 +267,40 @@ install () {
 }
 update () {
 	locatie
+	hoeveel1=0
 	hoeveel2=0
 	echo "checken voor update van script."
-	cd ~/.github
-	git stash &> /dev/null
-	git stash drop &> /dev/null
-	git pull
-	chmod 755 `realpath $0`
+	#cd ~/.github
+	#git stash &> /dev/null
+	#git stash drop &> /dev/null
+	#git pull
+	#chmod 755 `realpath $0`
 	#brew doctor &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
-	brewoutdatedlist=(`brew outdated|xargs`)& while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
+	brew outdated|xargs> ~/Documents/youtube-dl/.outdated.txt& while `ps -ef | grep br[e]w|grep outd[a]ted &> /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
+	brewoutdatedlist=`cat ~/Documents/youtube-dl/.outdated.txt`
+	rm ~/Documents/youtube-dl/.outdated.txt
 	for t in ${tools[@]}; do
 		for f in ${brewoutdatedlist[@]}; do
-			echo "$f <--- outdated bestand"
-			echo "$t <--- in de tools lijst"
 			if [[ $t == $f ]]; then
 				hoeveel1=$(( hoeveel1 + 1 ))
-				echo "hetzelfde!"
 			fi
-			echo ""
 		done
 	done
+	if [[ $hoeveel1 != "0" ]]; then
+		echo -e "\n"
+	fi
 	for t in ${tools[@]}; do
 		for f in ${brewoutdatedlist[@]}; do
 			if [[ $t == $f ]]; then
 				hoeveel2=$(( hoeveel2 + 1 ))
-				huidigpercentage=$(( 100 / hoeveel1 * hoeveel2 ))
+				huidigpercentage=`bc <<< "scale=2; 100/$hoeveel1*$hoeveel2"|awk 'BEGIN {FS="."}{print $1}'`
+				space="       "
 				if [[ $hoeveel1 == $hoeveel2 ]]; then
 					huidigpercentage=100
+					space="      "
 				fi
-				brew upgrade $f &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s     ";sleep .1;done;done
-				echo -ne "\r$hoeveel2/$hoeveel1 (%$huidigpercentage)	$t\n"
+				brew upgrade $f &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in / / - - \\ \\ \|; do echo -ne "\r$s	$hoeveel2/$hoeveel1 $f      "; sleep .05;done;done
+				echo -ne "\r√	$hoeveel2/$hoeveel1 (%$huidigpercentage)$space$t\n"
 				if [[ $updatelijst == "" ]]; then
 					updatelijst=$t
 				else
@@ -614,7 +618,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 	if [[ "$vofa" == "a" ]]; then
 		if [[ $anderefile == "" ]]; then
 			if [[ $image == 0 ]]; then	
-				filenaamverbeterd=`echo $filenaam|sed -e "s/$typ*/.mp3/"`
+				filenaamverbeterd=`echo $filenaam|rev|sed -e "s/$(echo $typ|rev)/3pm./"|rev`
 				while true; do
 					trap - SIGINT
 					trap
