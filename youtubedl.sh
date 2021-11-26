@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.0.2'
-commit='bugfix voor filenaam die veranderde'
+version='4.0.3'
+commit='excusief thumbnails genereren met tekst verbeterd'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -489,8 +489,12 @@ if [[ $algedaanvidpad != "" ]]; then
 fi
 if [[ $anderefile == "" ]]; then
 	if  [[ "$yourl" == "" ]]; then
-		toegang="0"
-		help
+		if [[ $instaurl == "" ]];then geengoedeurl=1 ;fi
+		if [[ $instaurl == "vid" ]];then geengoedeurl=1 ;fi
+		if [[ $geengoedeurl == 1 ]]||[[ $image == 0 ]]; then
+				toegang="0"
+				help
+		fi
 	fi
 fi
 if [[ $seconde != "" ]]; then
@@ -565,42 +569,52 @@ fi
 #filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename`
 random2=`echo $random|rev`
 if [[ $anderefile == "" ]]; then
-	alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
-	titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
-	filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
-	#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
-	filenaam=`echo $filenaamvooracc|sed -e "s|$random2| - |"|awk 'BEGIN {FS="'$random2'"}{print $1}'`
-	uploaddate=`echo $alleytinfo|awk 'BEGIN {FS="'$random2'"}{print $3}'|awk 'BEGIN {FS="'$random'"}{print $1}'`
-	uploaddate=${uploaddate:0:4}
-	filenaamExtentie=.`echo "${filenaam}"|rev|awk 'BEGIN { FS = "." } ; { print $1 }'|rev`
-	if  [[ "$filenaamExtentie" == ".m4a" ]];	#hier controleer je of het filetipe een .m4a is
-	then
-		toegang="1"
-		typ=".m4a"
-		#hij vranderd hier de tekst in het argument van filenaamverbeted van $filenaam (een .m4a) naar een .mp3
-	fi
-	if  [[ "$filenaamExtentie" == ".opus" ]]; #hier controleer je of het filetipe een .opus is
-	then
-		toegang="1"
-		typ=".opus"
-	fi
-	if	[[ "$filenaamExtentie" == ".webm" ]]; #hier controleer je of het filetipe een .webm is
-	then 
-		toegang="1"
-		typ=".opus"
+	if [[ $yourl == "" ]]; then
+		if [[ $manueelinput == "" ]]; then
+			echo "geen een url of manueelinput -m/-u"
+			exit 1
+		else
+			toegang=1
+			specialetoegang=1
+		fi
+	else
+		alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
+		titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
+		filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
+		#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
+		filenaam=`echo $filenaamvooracc|sed -e "s|$random2| - |"|awk 'BEGIN {FS="'$random2'"}{print $1}'`
+		uploaddate=`echo $alleytinfo|awk 'BEGIN {FS="'$random2'"}{print $3}'|awk 'BEGIN {FS="'$random'"}{print $1}'`
+		uploaddate=${uploaddate:0:4}
+		filenaamExtentie=.`echo "${filenaam}"|rev|awk 'BEGIN { FS = "." } ; { print $1 }'|rev`
+		if  [[ "$filenaamExtentie" == ".m4a" ]];	#hier controleer je of het filetipe een .m4a is
+		then
+			toegang="1"
+			typ=".m4a"
+			#hij vranderd hier de tekst in het argument van filenaamverbeted van $filenaam (een .m4a) naar een .mp3
+		fi
+		if  [[ "$filenaamExtentie" == ".opus" ]]; #hier controleer je of het filetipe een .opus is
+		then
+			toegang="1"
+			typ=".opus"
+		fi
+		if	[[ "$filenaamExtentie" == ".webm" ]]; #hier controleer je of het filetipe een .webm is
+		then 
+			toegang="1"
+			typ=".opus"
 
-		#hier verander je de argumenten van filenaam zodat hij denkt (bij een .webm) dat het een .opus is (waar hij bij een .webm automatish naar veranderd) dit is alleen bij .webm het geval
-		filenaam=`echo $filenaam|sed -e "s/\.webm*/.opus/"`
-	fi
-	if [[ "$filenaamExtentie" == ".mp4" ]]; #een test om te kijen of het yt url wel kopt
-	then
-		toegang="1"
-		typ=".mp4"
-	fi
-	if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
-	then
-		echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
-		exit 1
+			#hier verander je de argumenten van filenaam zodat hij denkt (bij een .webm) dat het een .opus is (waar hij bij een .webm automatish naar veranderd) dit is alleen bij .webm het geval
+			filenaam=`echo $filenaam|sed -e "s/\.webm*/.opus/"`
+		fi
+		if [[ "$filenaamExtentie" == ".mp4" ]]; #een test om te kijen of het yt url wel kopt
+		then
+			toegang="1"
+			typ=".mp4"
+		fi
+		if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
+		then
+			echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
+			exit 1
+		fi
 	fi
 else
 	ls "$anderefile"&>/dev/null&&toegang=1
@@ -612,9 +626,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 	if [[ $anderefile == "" ]]; then
 		account=`basename "$filenaamvooracc"|rev| cut -d'.' -f 2-|rev| awk 'BEGIN {FS="'$random2'"}{print $1}'`
 	fi
-	echo -e "\n\nTitel:		$titel" 
-	echo " "
-	echo -e "Account:	$account\n\n"
+	if [[ $specialetoegang != 1 ]]; then
+		echo -e "\n\nTitel:		$titel" 
+		echo " "
+		echo -e "Account:	$account\n\n"
+	fi
 	if [[ "$vofa" == "a" ]]; then
 		if [[ $anderefile == "" ]]; then
 			if [[ $image == 0 ]]; then	
