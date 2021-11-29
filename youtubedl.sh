@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.0.3'
-commit='excusief thumbnails genereren met tekst verbeterd'
+version='4.0.4'
+commit='verbeterde groepdetectie'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1179,7 +1179,17 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				i=`echo $i|sed -e "s/#//"`
 			done
 			ilowercase=`echo $i|tr [:upper:] [:lower:]`
-			grep -Rn "^$ilowercase$" ~/Documents/youtube-dl/.black.list &> /dev/null && verbeterdartiest=`echo $verbeterdartiest|sed -e "s|$i|#$i|g"`
+			grep -Rn "^$ilowercase$" ~/Documents/youtube-dl/.black.list &> /dev/null && igedetecteerd=1
+			if [[ $igedetecteerd == 1 ]]; then
+				echo $verbeterdartiest|grep "^$i" &>/dev/null&&begintmeti=1
+				if [[ $begintmeti == 1 ]]; then
+					verbeterdartiest=`echo $verbeterdartiest|sed -e "s|^$i|^#$i|g"`
+				else
+					verbeterdartiest=`echo $verbeterdartiest|sed -e "s| $i| #$i|g"`
+				fi
+				igedetecteerd=0
+				begintmeti=0
+			fi
 		done
 		laatstewoordvanartiest=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'|rev`
 		laatstewoordvanartiestrev=`echo $verbeterdartiest|rev|awk 'BEGIN {FS=" "}{print $1}'`
