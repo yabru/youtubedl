@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.0.4'
-commit='verbeterde groepdetectie'
+version='4.1.0'
+commit='bugfix voor video'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1609,16 +1609,19 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
 			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
 			gsed -i "s/^.*$/&\n/" ~/Documents/youtube-dl/lyrics.txt
-			echo "wil je vertalen?"
-			read vertalen
-			if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
-				#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
-				text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src en -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
-				rm ~/Documents/youtube-dl/lyrics.txt
-				mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
+			if [[ `cat ~/Documents/youtube-dl/lyrics.txt|wc -c|tr -d [:space:]` -lt 5000 ]];then
+				echo "wil je vertalen?"
+				read vertalen
+				if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
+					#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
+					text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src en -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
+					exit
+					rm ~/Documents/youtube-dl/lyrics.txt
+					mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
+				fi
+				#eyeD3 --encoding utf8 --add-lyrics ~/Documents/youtube-dl/lyrics.txt "$filenaamverbeterd" &>/dev/null
 			fi
-			#eyeD3 --encoding utf8 --add-lyrics ~/Documents/youtube-dl/lyrics.txt "$filenaamverbeterd" &>/dev/null
-			eyeD3 --encoding "utf8" --add-lyrics "/Users/$USER/Documents/youtube-dl/lyrics.txt" "$filenaamverbeterd" &>/dev/null
+			eyeD3 --encoding "utf8" --add-lyrics "/Users/$USER/Documents/youtube-dl/lyrics.txt" "$filenaamverbeterd" 1>/dev/null
 			rm ~/Documents/youtube-dl/lyrics.txt
 		else
 			echo "subs niet beschikbaar"
@@ -1630,7 +1633,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		if [[ $typ == ".mp4" ]]; then
 			filenaamverbeterd=`echo "$filenaamverbeterd"|rev|sed -e "s/4pm.//"|rev`
 		fi
-		/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
+		/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
 		#if [[ $filenaamverbeterd != *".mp4" ]]; then
 		#	filenaamverbeterd=`echo "$filenaamverbeterd.mp4"`
 		#fi
