@@ -1,7 +1,6 @@
 #!/bin/bash
 version='4.1.0'
-commit='test'
-#sus
+commit='tes2'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
