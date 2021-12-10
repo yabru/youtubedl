@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.1.0'
-commit='tes2'
+version='4.1.1'
+commit='update error gefixt'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -270,11 +270,11 @@ update () {
 	hoeveel1=0
 	hoeveel2=0
 	echo "checken voor update van script."
-	#cd ~/.github
-	#git stash &> /dev/null
-	#git stash drop &> /dev/null
-	#git pull
-	#chmod 755 `realpath $0`
+	cd ~/.github
+	git stash &> /dev/null
+	git stash drop &> /dev/null
+	git pull
+	chmod 755 `realpath $0`
 	#brew doctor &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	brew outdated|xargs> ~/Documents/youtube-dl/.outdated.txt& while `ps -ef | grep br[e]w|grep outd[a]ted &> /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	brewoutdatedlist=`cat ~/Documents/youtube-dl/.outdated.txt`
