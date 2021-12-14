@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.2.0'
-commit='autoupload toegevoegd'
+version='4.2.1'
+commit='bugfix'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -257,26 +257,26 @@ install () {
 			enhansedaudio=""
 		fi
 	done
-	if ! `ls "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"&>/dev/null`; then
-		#hij is er niet
-		while [[ $goedantwoord != 1 ]];do 
-			echo "geen music sync gevonden, wil je deze downlaoden (beste ervaring) Y/n"
-			read andwoord
-			if [[ $andwoord == "" ]]||[[ $andwoord == "y" ]]||[[ $andwoord == "Y" ]]; then
-				trap "rm -rf /Users/$USER/Downloads/autoaddmusic.workflow.zip /Users/$USER/Downloads/__MACOSX /Users/$USER/Downloads/autoaddmusic.workflow* &>/dev/null" SIGINT
-				wget -O /Users/$USER/Downloads/autoaddmusic.workflow.zip https://raw.githubusercontent.com/yabru/ytdlworkflow/main/autoaddmusic.workflow.zip
-				unzip /Users/$USER/Downloads/autoaddmusic.workflow.zip -d /Users/$USER/Downloads
-				rm -rf /Users/$USER/Downloads/autoaddmusic.workflow.zip /Users/$USER/Downloads/__MACOSX
-				open /Users/$USER/Downloads/autoaddmusic.workflow
-				goedantwoord=1
-				#rm -rf "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"
-			else
-				if [[ $andwoord == "n" ]]||[[ $andwoord == "N" ]];then
-					goedantwoord=1
-				fi
-			fi
-		done
-	fi
+	# if ! `ls "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"&>/dev/null`; then
+	# 	#hij is er niet
+	# 	while [[ $goedantwoord != 1 ]];do 
+	# 		echo "geen music sync gevonden, wil je deze downlaoden (beste ervaring) Y/n"
+	# 		read andwoord
+	# 		if [[ $andwoord == "" ]]||[[ $andwoord == "y" ]]||[[ $andwoord == "Y" ]]; then
+	# 			trap "rm -rf /Users/$USER/Downloads/autoaddmusic.workflow.zip /Users/$USER/Downloads/__MACOSX /Users/$USER/Downloads/autoaddmusic.workflow* &>/dev/null" SIGINT
+	# 			wget -O /Users/$USER/Downloads/autoaddmusic.workflow.zip https://raw.githubusercontent.com/yabru/ytdlworkflow/main/autoaddmusic.workflow.zip
+	# 			unzip /Users/$USER/Downloads/autoaddmusic.workflow.zip -d /Users/$USER/Downloads
+	# 			rm -rf /Users/$USER/Downloads/autoaddmusic.workflow.zip /Users/$USER/Downloads/__MACOSX
+	# 			open /Users/$USER/Downloads/autoaddmusic.workflow
+	# 			goedantwoord=1
+	# 			#rm -rf "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"
+	# 		else
+	# 			if [[ $andwoord == "n" ]]||[[ $andwoord == "N" ]];then
+	# 				goedantwoord=1
+	# 			fi
+	# 		fi
+	# 	done
+	# fi
 	if [[ $ietsgedaan == 1 ]]; then
 		echo ""
 		echo "Je gedownloaden videos en audio bestanden worden nu opgeslagen in je Documents (Documenten) en in de nieuwe map genaamd: youtube-dl voor audio en youtube-dl_video voor je video bestanden"
@@ -1663,6 +1663,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd"
 	fi
 fi
+osascript -e 'tell application "Music"
+	set newFile to "'"$filenaamverbeterd"'"
+	set toPlaylist to "Library"
+	add newFile to playlist toPlaylist
+end tell'
 if [[ $open == 1 ]]; then
 	if [[ $tweedeliedcheck == 1 ]]; then
 		open "$filenaamverbeterdpt1" "$filenaamverbeterdpt2"
@@ -1684,6 +1689,7 @@ if [[ $open == 1 ]]; then
 		fi
 	fi
 fi
+#mkdir ~/tijdelijk;mv "$filenaamverbeterd" ~/tijdelijk;sleep 1;mv ~/tijdelijk/* "$filenaamverbeterd";rm -rf ~/tijdelijk/&
 if [[ $beidecheck == "1" ]]; then
 	vofa=v
 	allelinksbehalvedeeerste=$yourl
