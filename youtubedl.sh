@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.1.1'
-commit='update error gefixt'
+version='4.2.0'
+commit='autoupload toegevoegd'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -257,6 +257,26 @@ install () {
 			enhansedaudio=""
 		fi
 	done
+	if ! `ls "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"&>/dev/null`; then
+		#hij is er niet
+		while [[ $goedantwoord != 1 ]];do 
+			echo "geen music sync gevonden, wil je deze downlaoden (beste ervaring) Y/n"
+			read andwoord
+			if [[ $andwoord == "" ]]||[[ $andwoord == "y" ]]||[[ $andwoord == "Y" ]]; then
+				trap "rm -rf /Users/$USER/Downloads/autoaddmusic.workflow.zip /Users/$USER/Downloads/__MACOSX /Users/$USER/Downloads/autoaddmusic.workflow* &>/dev/null" SIGINT
+				wget -O /Users/$USER/Downloads/autoaddmusic.workflow.zip https://raw.githubusercontent.com/yabru/ytdlworkflow/main/autoaddmusic.workflow.zip
+				unzip /Users/$USER/Downloads/autoaddmusic.workflow.zip -d /Users/$USER/Downloads
+				rm -rf /Users/$USER/Downloads/autoaddmusic.workflow.zip /Users/$USER/Downloads/__MACOSX
+				open /Users/$USER/Downloads/autoaddmusic.workflow
+				goedantwoord=1
+				#rm -rf "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"
+			else
+				if [[ $andwoord == "n" ]]||[[ $andwoord == "N" ]];then
+					goedantwoord=1
+				fi
+			fi
+		done
+	fi
 	if [[ $ietsgedaan == 1 ]]; then
 		echo ""
 		echo "Je gedownloaden videos en audio bestanden worden nu opgeslagen in je Documents (Documenten) en in de nieuwe map genaamd: youtube-dl voor audio en youtube-dl_video voor je video bestanden"
@@ -1227,9 +1247,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		done
 		if [[ $image == 0 ]]; then
 			if [[ $prodintitel == "1" ]]; then
-				if [[ $engeneer == "@"* ]]; then
-					engeneer=`echo $engeneer|sed -e "s/@//"`
-				fi
+				engeneer=`echo $engeneer|sed -e "s/^@//"`
+				engeneer=`echo "$engeneer"|sed -e "s/, / x /g"`
 				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
 				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
 			else
@@ -1615,7 +1634,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
 					#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
 					text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src en -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
-					exit
 					rm ~/Documents/youtube-dl/lyrics.txt
 					mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
 				fi
