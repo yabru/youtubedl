@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.2.1'
-commit='bugfix'
+version='4.4.0'
+commit='sync functianoliteit toegevoegd'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -129,6 +129,7 @@ help () {
 	echo "-h	[HELP]				Laat een korte hulp pagina zien (Deze pagina)"
 	echo "-b	[BEIDE]				Download beide video en audio in één commando (maar één link mogelijk)"
 	echo "-v	[VERSIE]			laat de huidige versie van het script zien met het laatste update bericht"
+	echo "-s	[SYNC]				Synced al je nummers met je iPhone"
 	exit 10
 }
 toolscheck () {
@@ -233,6 +234,20 @@ install () {
 		echo "" >> ~/Documents/youtube-dl/.config.yt
 		echo "ENHANSEDAUDIO=" >> ~/Documents/youtube-dl/.config.yt
 		echo "#dit zal de waarde zijn om te kijken of je enhansedaudio wilt" >> ~/Documents/youtube-dl/.config.yt
+		echo "" >> ~/Documents/youtube-dl/.config.yt
+		echo "IPHONESYNC=" >> ~/Documents/youtube-dl/.config.yt
+		echo "IPHONENAAM=" >> ~/Documents/youtube-dl/.config.yt
+		echo "#BEWERKT NOOIT DIRECT IPHONENAAM, GEBRUIK: youtubedl -i" >> ~/Documents/youtube-dl/.config.yt
+		echo "#LET OP! ZORG ERVOOR DAT IPHONE NAAM GOEDSTAAT" >> ~/Documents/youtube-dl/.config.yt
+		echo "#dit bepalen of je na een download gelijk je muziek wilt synchroniseren naar je iPhone" >> ~/Documents/youtube-dl/.config.yt
+	fi
+	if ! `cat ~/Documents/youtube-dl/.config.yt|grep -i "^IPHONESYNC=" &>/dev/null`; then
+		echo "" >> ~/Documents/youtube-dl/.config.yt
+		echo "IPHONESYNC=" >> ~/Documents/youtube-dl/.config.yt
+		echo "IPHONENAAM=" >> ~/Documents/youtube-dl/.config.yt
+		echo "#BEWERKT NOOIT DIRECT IPHONENAAM, GEBRUIK: youtubedl -i" >> ~/Documents/youtube-dl/.config.yt
+		echo "#LET OP! ZORG ERVOOR DAT IPHONE NAAM GOEDSTAAT" >> ~/Documents/youtube-dl/.config.yt
+		echo "#dit bepalen of je na een download gelijk je muziek wilt synchroniseren naar je iPhone" >> ~/Documents/youtube-dl/.config.yt
 	fi
 	genre=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^GENRE="|sed -e "s/GENRE=//"`
 	if [[ $genre == "" ]]; then
@@ -257,6 +272,93 @@ install () {
 			enhansedaudio=""
 		fi
 	done
+	isync=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^IPHONESYNC="|sed -e "s/IPHONESYNC=//"`
+	while [[ $isync == "" ]]; do
+		echo "Wil je automatish je iPhone Synchroniseren aan je Mac muziek-bibliotheek? Y/n"
+		read isync
+		if [[ $isync == "y" ]]||[[ $isync == "Y" ]]||[[ $isync == "" ]]; then
+			isync="true"
+		fi
+		if [[ $isync == "n" ]]||[[ $isync == "N" ]];then
+			isync="false"	
+		fi
+		if [[ $isync == "true" ]]||[[ $isync == "false" ]]; then
+			gsed -i "s/^IPHONESYNC=.*/IPHONESYNC=$isync/" ~/Documents/youtube-dl/.config.y
+			ietsgedaan=1
+		else
+			echo "geen geldig argument herkend, probeer opnieuw"
+			isync=""
+		fi
+	done
+	iPhonenaam=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^IPHONENAAM="|sed -e "s/IPHONENAAM=//"`
+	isync=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^IPHONESYNC="|sed -e "s/IPHONESYNC=//"`
+	if [[ $isync == "true" ]]&&[[ $iPhonenaam == "" ]];then
+		gevonden=0
+		read -p "Voledige naam van je iPhone: " iPhonenaam
+		osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
+		-- Open Finder window
+		tell application "Finder" to open ("/" as POSIX file)
+
+		on isPhoneVisible(iPhoneName)
+			tell application "System Events" to tell outline 1 of scroll area 1 of splitter group 1 of window 1 of application process "Finder"
+				set theElements to first UI element of every row whose name is iPhoneName
+				repeat with e in theElements
+					try
+						if name of e is iPhoneName then
+							return true
+						end if
+					end try
+				end repeat
+			end tell
+			return false
+		end isPhoneVisible
+
+		if not isPhoneVisible(iPhoneName) then
+			-- Restart daemon that shows the iPhone in the sidebar so it is actually visible
+			do shell script "pkill -9 AMPDevicesAgent AMPDeviceDiscoveryAgent"
+		end if
+
+
+		-- Select iPhone
+		-- needs retry until the iPhone becomes visible
+		tell application "System Events" to tell outline 1 of scroll area 1 of splitter group 1 of window 1 of application process "Finder"
+			set hasFoundPhone to false
+			set x to 0
+			repeat while not hasFoundPhone 
+				set theElements to first UI element of every row whose name is iPhoneName
+				repeat with e in theElements
+					try
+						if name of e is iPhoneName then
+							tell e to perform action "AXOpen"
+							do shell script "touch /Users/'"$USER"'/Documents/youtube-dl/.gevonden"
+							set hasFoundPhone to true
+
+							exit repeat
+						end if
+					end try
+				end repeat
+				delay 1
+				set x to x + 1
+				if 15 > x then
+					do shell script "pkill osascript&>/dev/null"
+				end if
+			end repeat
+		end tell' &>/dev/null
+		osascript -e 'tell application "Finder"
+		close window 1
+		end tell'
+		ls "/Users/$USER/Documents/youtube-dl/.gevonden"&>/dev/null&&gevonden=1
+		echo ""
+		if [[ $gevonden == 1 ]]; then
+			echo "iPhone gevonden"
+			gsed -i "s/^IPHONENAAM=.*/IPHONENAAM=$iPhonenaam/" ~/Documents/youtube-dl/.config.yt
+			ietsgedaan=1
+		else
+			echo "iPhone niet gevonden, controleer of je op hetzelfde netwerk zit & probeer het zometeen opnieuw"
+			exit 1
+		fi
+		rm "/Users/$USER/Documents/youtube-dl/.gevonden" &>/dev/null
+	fi
 	# if ! `ls "/Users/$USER/Library/Workflows/Applications/Folder Actions/autoaddmusic.workflow"&>/dev/null`; then
 	# 	#hij is er niet
 	# 	while [[ $goedantwoord != 1 ]];do 
@@ -277,6 +379,7 @@ install () {
 	# 		fi
 	# 	done
 	# fi
+
 	if [[ $ietsgedaan == 1 ]]; then
 		echo ""
 		echo "Je gedownloaden videos en audio bestanden worden nu opgeslagen in je Documents (Documenten) en in de nieuwe map genaamd: youtube-dl voor audio en youtube-dl_video voor je video bestanden"
@@ -337,6 +440,69 @@ update () {
 		echo -ne "\rAlles al up to date             \n"
 	fi
 	exit 0
+}
+syncfunc () {
+osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
+	-- Open Finder window
+	tell application "Finder" to open ("/" as POSIX file)
+
+	on isPhoneVisible(iPhoneName)
+		tell application "System Events" to tell outline 1 of scroll area 1 of splitter group 1 of window 1 of application process "Finder"
+			set theElements to first UI element of every row whose name is iPhoneName
+			repeat with e in theElements
+				try
+					if name of e is iPhoneName then
+						return true
+					end if
+				end try
+			end repeat
+		end tell
+		return false
+	end isPhoneVisible
+
+	if not isPhoneVisible(iPhoneName) then
+		-- Restart daemon that shows the iPhone in the sidebar so it is actually visible
+		do shell script "pkill -9 AMPDevicesAgent AMPDeviceDiscoveryAgent"
+	end if
+
+
+	-- Select iPhone
+	-- needs retry until the iPhone becomes visible
+	tell application "System Events" to tell outline 1 of scroll area 1 of splitter group 1 of window 1 of application process "Finder"
+		set hasFoundPhone to false
+		repeat while not hasFoundPhone
+			set theElements to first UI element of every row whose name is iPhoneName
+			repeat with e in theElements
+				try
+					if name of e is iPhoneName then
+						tell e to perform action "AXOpen"
+						set hasFoundPhone to true
+						exit repeat
+					end if
+				end try
+			end repeat
+			delay 1
+		end repeat
+	end tell
+
+	-- Start sync
+	tell application "System Events" to tell application process "Finder"
+		repeat until button "Sync" of splitter group 1 of splitter group 1 of window iPhoneName exists
+			delay 1
+		end repeat
+		
+		click button "Sync" of splitter group 1 of splitter group 1 of window iPhoneName
+		repeat until button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName exists
+			delay 1
+		end repeat
+		repeat while button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName exists
+			click button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName
+		end repeat
+		--repeat 10 times
+    	--	click button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName
+		--end repeat
+	end tell'
+
 }
 fotocrop () {
 	fotopositie=`echo $instaurl|awk 'BEGIN {FS="|"}{print $2}'`
@@ -425,7 +591,7 @@ mind () {
 	fi
 	exit 0
 }
-while getopts u:haridfobs:e:t:UTm:g:vy:p:F: flag;
+while getopts u:haridfobs:e:t:UTm:g:vy:p:F:S flag;
 do
 	case "${flag}" in
 	u)			yourl=${OPTARG};;
@@ -475,6 +641,8 @@ do
 
 	F)			anderefile=${OPTARG};;
 
+	S)			syncactivatie=1;;
+
 	*)			exit 0;;
 	esac
 done
@@ -488,9 +656,22 @@ if [[ $enhansedaudio == "" ]]; then
 	echo "run youtubedl -i"
 	exit 1
 fi
+isync=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^IPHONESYNC="|sed -e "s/IPHONESYNC=//"`
+if [[ $isync == "" ]]; then
+	echo "run youtubedl -i"
+	exit 1
+fi
+iPhonenaam=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^IPHONENAAM="|sed -e "s/IPHONENAAM=//"`
+if [[ $isync == "true" ]]&&[[ $iPhonenaam == "" ]]; then
+	echo -e "geen iphone gevonden terwijl Sync aanstaat,\nvoeg een iPhone toe: youtubedl -i\nOf zet IPHONESYNC op false in: ~/Documents/youtube-dl/.config.yt"
+fi
 #############################
 #	HET BEGIN VAN DE CODE	#
 #############################
+if [[ $syncactivatie == 1 ]]&&[[ $yourl == "" ]]; then
+	syncfunc
+	exit 0
+fi
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
 	echo "youtubedl version $version"
@@ -1455,7 +1636,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					fadeoutsec=3
 				fi
 				if [[ $eindesec == "0"* ]]; then
-				 	eindesec=`echo $eindesec|sed -e "s/0//"`
+					eindesec=`echo $eindesec|sed -e "s/0//"`
 				fi
 				eindesec=$(( eindemin * 60 + eindesec ))
 			fi
@@ -1582,8 +1763,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
 					if [[ $fadeinsec != 0 ]]; then
-					 	ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-					 	sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+						ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+						sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
 						ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
 						rm "$filenaamverbeterdpt1" &> /dev/null
 						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
@@ -1725,4 +1906,8 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 			fi
 		fi
 	fi
+fi
+echo isync poging
+if [[ $isync == "true" ]]||[[ $syncactivatie == 1 ]]; then
+	syncfunc
 fi
