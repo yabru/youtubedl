@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.4.0'
-commit='sync functianoliteit toegevoegd'
+version='4.4.1'
+commit='bugfix'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -283,7 +283,7 @@ install () {
 			isync="false"	
 		fi
 		if [[ $isync == "true" ]]||[[ $isync == "false" ]]; then
-			gsed -i "s/^IPHONESYNC=.*/IPHONESYNC=$isync/" ~/Documents/youtube-dl/.config.y
+			gsed -i "s/^IPHONESYNC=.*/IPHONESYNC=$isync/" ~/Documents/youtube-dl/.config.yt
 			ietsgedaan=1
 		else
 			echo "geen geldig argument herkend, probeer opnieuw"
