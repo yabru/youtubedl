@@ -13,6 +13,7 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
+#test
 berekenmin () {
 	urenvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $1}'`
 	urenna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $1}'`
