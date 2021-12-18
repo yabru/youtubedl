@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.4.1'
-commit='bugfix'
+version='4.4.2'
+commit='Grote bugfixes'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -340,7 +340,8 @@ install () {
 				delay 1
 				set x to x + 1
 				if 15 > x then
-					do shell script "pkill osascript&>/dev/null"
+					exit repeat
+					--do shell script "pkill osascript&>/dev/null"
 				end if
 			end repeat
 		end tell' &>/dev/null
@@ -444,7 +445,12 @@ update () {
 syncfunc () {
 osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
 	-- Open Finder window
-	tell application "Finder" to open ("/" as POSIX file)
+	tell application "Finder"
+		if exists window 1 then
+		else
+			tell application "Finder" to open ("/" as POSIX file)
+		end if
+	end tell
 
 	on isPhoneVisible(iPhoneName)
 		tell application "System Events" to tell outline 1 of scroll area 1 of splitter group 1 of window 1 of application process "Finder"
@@ -470,6 +476,7 @@ osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
 	-- needs retry until the iPhone becomes visible
 	tell application "System Events" to tell outline 1 of scroll area 1 of splitter group 1 of window 1 of application process "Finder"
 		set hasFoundPhone to false
+		set x to 0
 		repeat while not hasFoundPhone
 			set theElements to first UI element of every row whose name is iPhoneName
 			repeat with e in theElements
@@ -481,6 +488,11 @@ osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
 					end if
 				end try
 			end repeat
+			set x to x + 1
+			--if 10000 > x then
+			--	exit repeat
+				--do shell script "pkill osascript&>/dev/null"
+			--end if
 			delay 1
 		end repeat
 	end tell
@@ -490,10 +502,15 @@ osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
 		repeat until button "Sync" of splitter group 1 of splitter group 1 of window iPhoneName exists
 			delay 1
 		end repeat
-		
 		click button "Sync" of splitter group 1 of splitter group 1 of window iPhoneName
+		set x to 0
 		repeat until button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName exists
 			delay 1
+			set x to x + 1
+			--if 10000 > x then
+				--exit repeat
+				--do shell script "pkill osascript&>/dev/null"
+			--end if
 		end repeat
 		repeat while button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName exists
 			click button "Skip Backup" of splitter group 1 of splitter group 1 of window iPhoneName
@@ -669,7 +686,7 @@ fi
 #	HET BEGIN VAN DE CODE	#
 #############################
 if [[ $syncactivatie == 1 ]]&&[[ $yourl == "" ]]; then
-	syncfunc
+	syncfunc&>/dev/null&
 	exit 0
 fi
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
@@ -853,8 +870,10 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				done
 			fi
 		else
-			filenaam=$anderefile
-			filenaamverbeterd=`echo $filenaam`
+			ls ~/Documents/youtube-dl/"`basename "$anderefile"`"&>/dev/null||mv "$anderefile" ~/Documents/youtube-dl/"`basename "$anderefile"`"
+			filenaam="/Users/$USER/Documents/youtube-dl/"`basename "$anderefile"`""
+			echo $filenaam
+			filenaamverbeterd=$filenaam
 		fi
 		#/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio||echo "opniew proberen? (Y/n)"; read opniewproberen; if [[ $opniewproberen == "" ]]||[[ $opniewproberen == "y" ]]||[[ $opniewproberen == "Y" ]]; then youtubedl "$@";else exit; fi #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
 		trap exit SIGINT
@@ -1624,7 +1643,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a "volume=$volumepc" "$filenaamverbeterd"
 			fi
 		fi
-		genre=`cat Documents/youtube-dl/.config.yt|grep -i "^GANRE"`
+		genre=`cat ~/Documents/youtube-dl/.config.yt|grep -i "^GANRE"`
 		if [[ $eindesec != "" ]]; then
 			if [[ $eindesec == *":"* ]]; then
 				fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
@@ -1825,6 +1844,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		else
 			echo "subs niet beschikbaar"
 		fi
+		for f in `ls -art /Users/$USER/Documents/youtube-dl|tail -3 |sed -e "s/ /347345749756/g"|awk 1 ORS=" "`;do if [[ $f != "."* ]]; then f=`echo $f|sed -e "s/347345749756/ /g"`; osascript -e 'tell application "Music"
+			set newFile to "'"/Users/$USER/Documents/youtube-dl/$f"'"
+			set toPlaylist to "Library"
+			add newFile to playlist toPlaylist
+			end tell'; echo "/Users/"$USER"/Documents/youtube-dl$f";fi
+		done
 	fi
 	if [[ "$vofa" == "v" ]]; then
 		filenaamverbeterd=`echo "$filenaam"|sed -e "s/$typ*//"`
@@ -1844,11 +1869,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd"
 	fi
 fi
-osascript -e 'tell application "Music"
-	set newFile to "'"$filenaamverbeterd"'"
-	set toPlaylist to "Library"
-	add newFile to playlist toPlaylist
-end tell'
+# osascript -e 'tell application "Music"
+# 	set newFile to "'"$filenaamverbeterd"'"
+# 	set toPlaylist to "Library"
+# 	add newFile to playlist toPlaylist
+# end tell'
 if [[ $open == 1 ]]; then
 	if [[ $tweedeliedcheck == 1 ]]; then
 		open "$filenaamverbeterdpt1" "$filenaamverbeterdpt2"
@@ -1909,5 +1934,5 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 fi
 echo isync poging
 if [[ $isync == "true" ]]||[[ $syncactivatie == 1 ]]; then
-	syncfunc
+	syncfunc&
 fi
