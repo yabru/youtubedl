@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.4.5'
-commit='bugfix'
+version='4.4.6'
+commit='thumbnail bugfix'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -522,7 +522,7 @@ osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
 
 }
 fotocrop () {
-	fotopositie=`echo $instaurl|awk 'BEGIN {FS="|"}{print $2}'`
+	fotopositie=`echo "$instaurl"|awk 'BEGIN {FS="|"}{print $2}'`
 	if [[ $fotopositie != "" ]]; then
 		if [[ $fotopositie == "boven" ]]; then
 			uiteindelijkepositie="north"
@@ -1486,7 +1486,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
 								fotokeuze=1
 								if [[ $fotokeuze == 1 ]]; then
-									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+									instaurlzonderpipe=`echo "$instaurl"|sed -e "s/|.*//"`
+									wget -O ~/Documents/youtube-dl/outfile.jpg "$instaurlzonderpipe" &> /dev/null||fotokeuze=2
 									if [[ $fotokeuze != 2 ]]; then
 										fotocrop
 									fi		
@@ -1565,7 +1566,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
 								fotokeuze=1
 								if [[ $fotokeuze == 1 ]]; then
-									wget -O ~/Documents/youtube-dl/outfile.jpg $instaurl &> /dev/null||fotokeuze=2
+									instaurlzonderpipe=`echo "$instaurl"|sed -e "s/|.*//"`
+									wget -O ~/Documents/youtube-dl/outfile.jpg "$instaurlzonderpipe" &> /dev/null||fotokeuze=2
 									if [[ $fotokeuze != 2 ]]; then
 										fotocrop
 									fi		
@@ -1858,7 +1860,15 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		if [[ $typ == ".mp4" ]]; then
 			filenaamverbeterd=`echo "$filenaamverbeterd"|rev|sed -e "s/4pm.//"|rev`
 		fi
-		/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"||youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"
+		trap - SIGINT
+		trap
+		trap exit 1 SIGINT
+		while [[ $gehaald != 1 ]];do
+			/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
+			if [[ $gehaald != 1 ]]; then
+				youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"	
+			fi
+		done
 		#if [[ $filenaamverbeterd != *".mp4" ]]; then
 		#	filenaamverbeterd=`echo "$filenaamverbeterd.mp4"`
 		#fi
