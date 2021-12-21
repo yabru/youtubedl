@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.4.2'
-commit='Grote bugfixes'
+version='4.4.4'
+commit='1080p auto genereerde tumbnails (ipv 720p)'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1517,15 +1517,16 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
+					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
+					#1280x720
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $caractertitel -gt 17 ]]; then
 						huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
+						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*240"`
 					else
-						titelvergrotingsfactor=156
+						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
@@ -1595,15 +1596,15 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1280x720 ~/Documents/youtube-dl/outfile.jpg
+					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $caractertitel -gt 17 ]]; then
 						huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*150"`
+						titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*240"`
 					else
-						titelvergrotingsfactor=156
+						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-50 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,50 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
