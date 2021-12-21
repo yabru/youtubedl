@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.4.4'
-commit='1080p auto genereerde tumbnails (ipv 720p)'
+version='4.4.5'
+commit='bugfix'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1526,7 +1526,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					else
 						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 65 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
