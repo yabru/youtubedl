@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.4.6'
-commit='thumbnail bugfix'
+version='4.5.0'
+commit='bugfixes en patches (-s c toegevoegd[zie youtubedl -h voor meer info])'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -106,7 +106,7 @@ help () {
 	echo "audio	-a				Exporteer het bestand als audio met een .mp3 bestandtype en voeg uitgebreide metadata toe (standaard bestandtype is .mp4)"
 	echo "-p	[PROCENT]			Zet een eigen procent van volume (kan harder of zachter zijn) Voorbeeld: -p 150"
 	echo "-e	[EINDE](tijd)			geef aan wanneer je bestand moet stopen en houd alle metadata (met een \|\"seconde\" bepaal je hoelang de fadeout is standaard 3)"
-	echo "-s	[SECONDE](tijd)			Download vanaf de speciafieke seconde die je hem geeft (Format: onder de min -s 34 over de min 1:24)(met een \|\"seconde\" bepaal je hoelang de fadein is standaard 2)"
+	echo "-s	[SECONDE](tijd)			Download vanaf de speciafieke seconde die je hem geeft (Format: onder de min -s 34 | over de min -s 1:24)(met een \|\"seconde\" bepaal je hoelang de fadein is standaard 2)(-s c haalt stilte automatish weg)"
 	echo "-t	[TWEEDELIED](tijd)		als er meerdere liedjes in 1 video zitten. Geef aan waar de wissel in de video zit"
 	echo ""
 	echo ""
@@ -720,7 +720,7 @@ if [[ $seconde != "" ]]; then
 	secondecijfercheck=`echo $seconde|sed -e "s/://"`
 	secondecijfercheck=`echo $secondecijfercheck|sed -e "s/\.//g"`
 	secondecijfercheck=`echo $secondecijfercheck|sed -e "s/|//"`
-	if ! [[ "$secondecijfercheck" =~ ^[0-9]+$ ]]; then
+	if ! [[ "$secondecijfercheck" =~ ^[0-9]+$ ]]&&[[ "$secondecijfercheck" != "c" ]]; then
 		echo "Gebruik cijfers bij -s"
 		exit 1
 	fi
@@ -1653,7 +1653,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				eindesec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $1}'`
 				eindemin=`echo $eindesec|awk 'BEGIN {FS=":"}{print $1}'`
 				eindesec=`echo $eindesec|awk 'BEGIN {FS=":"}{print $2}'`
-				fadeoutsec=`echo $eindesec|awk 'BEGIN {FS="|"}{print $2}'`
 				if [[ $fadeoutsec == "" ]]; then
 					fadeoutsec=3
 				fi
@@ -1667,6 +1666,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 				mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 				avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
+				
 				if [[ $fadeoutsec != 0 ]]; then
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h 0 -0 "$fadeoutsec" &> /dev/null 
@@ -1761,52 +1761,74 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		sec=""
 		secondenadubbelepunt=0
 		if [[ $seconde != "" ]]; then
-			if [[ $seconde == *":"* ]]; then
-				minuut=`echo $seconde|awk 'BEGIN {FS=":"}{print $1}'`
-				secondenadubbelepunt=`echo $seconde|awk 'BEGIN {FS=":"}{print $2}'`
-				if [[ $secondenadubbelepunt == "0"* ]]; then
-					secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
+			if [[ $seconde != "c" ]]; then
+				if [[ $seconde == *":"* ]]; then
+					minuut=`echo $seconde|awk 'BEGIN {FS=":"}{print $1}'`
+					secondenadubbelepunt=`echo $seconde|awk 'BEGIN {FS=":"}{print $2}'`
+					if [[ $secondenadubbelepunt == "0"* ]]; then
+						secondenadubbelepunt=`echo $secondenadubbelepunt|sed -e "s/0//"`
+					fi
+					minuutinsec=$(( minuut * 60 ))
+					seconde=$(( secondenadubbelepunt + minuutinsec ))
 				fi
-				minuutinsec=$(( minuut * 60 ))
-				seconde=$(( secondenadubbelepunt + minuutinsec ))
-			fi
-			fadeinsec=`echo $seconde|awk 'BEGIN {FS="|"}{print $2}'`
-			if [[ $fadeinsec == "" ]]; then
-				fadeinsec=2
+				fadeinsec=`echo $seconde|awk 'BEGIN {FS="|"}{print $2}'`
+				if [[ $fadeinsec == "" ]]; then
+					fadeinsec=2
+				fi
+			else
+				fadeinsec=0
 			fi
 			echtgedaan=0
 			echo ""
 			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 				if [[ $tweedelied != "" ]]; then
 					ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-					avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					if [[ $seconde == "c" ]]; then
+						ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					else
+						avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					fi
 					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
 					rm "$filenaamverbeterdpt1" &> /dev/null
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
 					if [[ $fadeinsec != 0 ]]; then
-						ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-						ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-						rm "$filenaamverbeterdpt1" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+						if [[ $fadeinsec == "c" ]]; then
+							ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
+						else
+							ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+							sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+							ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+							rm "$filenaamverbeterdpt1" &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
+							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+						fi
 					fi 
 					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 				else
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-					avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					if [[ $seconde == "c" ]]; then
+						ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					else
+						avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					fi
 					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
 					rm "$filenaamverbeterd" &> /dev/null
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
 					if [[ $fadeinsec != 0 ]]; then
-						ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
-						sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-						ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-						rm "$filenaamverbeterd" &> /dev/null
-						mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
-						eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+						if [[ $fadeinsec == "c" ]]; then
+							ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
+						else
+							ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+							sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+							ffmpeg -i "$filenaamverbeterd" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+							rm "$filenaamverbeterd" &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
+							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+						fi
 					fi
 					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 				fi
