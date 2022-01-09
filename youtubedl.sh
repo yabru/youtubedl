@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.5.0'
-commit='bugfixes en patches (-s c toegevoegd[zie youtubedl -h voor meer info])'
+version='4.7.0'
+commit='Thumnail VEEL betere qualiteit'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -99,7 +99,7 @@ help () {
 	echo "NOODZAAKELIJK:"
 	echo "-u	[URL]				Voor het invoegen YouTube url (heeft een URL na -u nodig)"
 	echo "-F	[FILE]				sla het download aspect over met -F en geef aan welk bestand je wilt bewerken."
-	echo "-y	[URL BESTAND]			(vervanning voor -u) Haalt de url uit bestanden die eerder zijn gedownload. (pad nodig)"
+	echo "-y	[URL BESTAND]			(vervanning voor -u) Haalt de url uit bestanden die eerder zijn gedownload met deze tool. (pad nodig)"
 	echo ""
 	echo ""
 	echo ""
@@ -700,7 +700,11 @@ toolscheck
 if [[ $algedaanvidpad != "" ]]; then
 	ls "$algedaanvidpad" &> /dev/null && gehaald=1
 	if [[ $gehaald == 1 ]]; then
-		yourl=`exiftool "$algedaanvidpad"|grep URL`
+		yourl=`exiftool "$algedaanvidpad"|grep '^User Defined Text               : (URL)'`
+		if [[ $yourl == "" ]]; then
+			echo "geen goed bestand gevonden"
+			exit 1
+		fi
 		yourl=`echo ${yourl:40}`
 
 	fi
@@ -853,10 +857,22 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		if [[ $anderefile == "" ]]; then
 			if [[ $image == 0 ]]; then	
 				filenaamverbeterd=`echo $filenaam|rev|sed -e "s/$(echo $typ|rev)/3pm./"|rev`
+				yourlid=$(echo $yourl|sed -e "s|.*youtu.be/||")
+				yourlid=$(echo $yourlid|sed -e "s|.*/watch?v=||")
+				yourlid=$(echo $yourlid|sed -e "s|?list=.*||")
+				yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
+				thumbnailbestemming="/Users/$USER/Documents/youtube-dl/$yourlid.jpg"
+				wget -O ~/Documents/youtube-dl/$yourlid.jpg https://img.youtube.com/vi/$yourlid/maxresdefault.jpg &>/dev/null||wgetgingfout=1
+				if [[ $wget ]]; then
+					echo MAX qualiteit Thumbnail Downloaden ging mis, Naitive tool gebruiken...
+					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+					thumbnailbestemming="/Users/$USER/Documents/youtube-dl/outfile.jpg"
+				fi
 				while true; do
 					trap - SIGINT
 					trap
-					/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+					#--embed-thumbnail
+					/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 					if [[ $goedgegaan == 1 ]]; then
 						break
 					else
@@ -868,6 +884,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						fi
 					fi
 				done
+				eyeD3 --add-image="$thumbnailbestemming":FRONT_COVER "$filenaamverbeterd" &>/dev/null
 			fi
 		else
 			ls ~/Documents/youtube-dl/"`basename "$anderefile"`"&>/dev/null||mv "$anderefile" ~/Documents/youtube-dl/"`basename "$anderefile"`"
@@ -1152,7 +1169,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		artiestnaam=`echo $artiestnaam|sed -e "s/, / x /g"|sed -e "s/ & / x /g"`
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="@"}{print $1}'`
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="|"}{print $1}'`
-		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="-"}{print $1}'`
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="("}{print $1}'`
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="["}{print $1}'`
 		if [[ $seperator != "" ]]; then
@@ -1449,10 +1465,10 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			if [[ $prodintitel == "1" ]]; then
 				engeneer=`echo $engeneer|sed -e "s/^@//"`
 				engeneer=`echo "$engeneer"|sed -e "s/, / x /g"`
-				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd"  &> /dev/null
+				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="$engeneer" -c copy "$filenaamverbeterd" &>/dev/null
 				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null		
 			else
-				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="-Onbekend-" -c copy "$filenaamverbeterd"  &> /dev/null
+				avconv -i ~/Documents/youtube-dl/.tijdelijk.mp3 -metadata album="$account" -metadata TDRC="$uploaddate" -metadata genre="$genre" -metadata URL="$yourl" -metadata title="$liedtitelzonderprod" -metadata artist="$verbeterdartiest" -metadata composer="-Onbekend-" -c copy "$filenaamverbeterd" &>/dev/null
 				rm ~/Documents/youtube-dl/.tijdelijk.mp3 ~/Documents/youtube-dl/file.jpg &> /dev/null
 			fi
 		fi
@@ -1784,7 +1800,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				if [[ $tweedelied != "" ]]; then
 					ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					if [[ $seconde == "c" ]]; then
-						ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					else
 						avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					fi
@@ -1794,7 +1810,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
 					if [[ $fadeinsec != 0 ]]; then
 						if [[ $fadeinsec == "c" ]]; then
-							ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
 						else
 							ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
@@ -1809,7 +1825,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				else
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					if [[ $seconde == "c" ]]; then
-						ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					else
 						avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					fi
@@ -1819,7 +1835,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
 					if [[ $fadeinsec != 0 ]]; then
 						if [[ $fadeinsec == "c" ]]; then
-							ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-20dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
 						else
 							ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
