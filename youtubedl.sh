@@ -1,12 +1,12 @@
 #!/bin/bash
-version='4.7.1'
-commit='update verbeterd'
+version='4.7.2'
+commit='Dit is een test'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
 random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 #gshufiserniet=`gshuf --version &> /dev/null&&echo "1"`
-#if [[ $gshufiserniet == "1" ]]; then
+#if  [[ $gshufiserniet == "1" ]]; then
 #	entries=($(gshuf -i 0-149 -n 15 | sort -n))
 #	random=`echo "${entries[@]}"|sed -e 's/ //g'`
 #fi
