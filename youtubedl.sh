@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.7.0'
-commit='Thumnail VEEL betere qualiteit'
+version='4.7.1'
+commit='update verbeterd'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -394,11 +394,17 @@ update () {
 	hoeveel1=0
 	hoeveel2=0
 	echo "checken voor update van script."
+	versievoorupdate=`head -2 ~/.github/youtubedl.sh|grep version|sed -e "s/version=//"|sed -e "s/'//g"`
 	cd ~/.github
 	git stash &> /dev/null
 	git stash drop &> /dev/null
 	git pull
 	chmod 755 `realpath $0`
+	versienaupdate=`head -2 ~/.github/youtubedl.sh|grep version|sed -e "s/version=//"|sed -e "s/'//g"`
+	if [[ $versievoorupdate != $versienaupdate ]]; then
+		echo -e "\nGeupdate naar versie: $versienaupdate"
+		echo "met Path bericht: `head -3 ~/.github/youtubedl.sh|tail -1|sed -e "s/commit='//"|sed -e "s/'//g"`"
+	fi
 	#brew doctor &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	brew outdated|xargs> ~/Documents/youtube-dl/.outdated.txt& while `ps -ef | grep br[e]w|grep outd[a]ted &> /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	brewoutdatedlist=`cat ~/Documents/youtube-dl/.outdated.txt`
