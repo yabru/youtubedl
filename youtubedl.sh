@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.7.1'
-commit='Update Status toegevoegd'
+version='4.7.2'
+commit='Kleine updates hier  daar'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -866,18 +866,24 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				yourlid=$(echo $yourlid|sed -e "s|.*/watch?v=||")
 				yourlid=$(echo $yourlid|sed -e "s|?list=.*||")
 				yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
-				thumbnailbestemming="/Users/$USER/Documents/youtube-dl/$yourlid.jpg"
-				wget -O ~/Documents/youtube-dl/$yourlid.jpg https://img.youtube.com/vi/$yourlid/maxresdefault.jpg &>/dev/null||wgetgingfout=1
-				if [[ $wget ]]; then
-					echo MAX qualiteit Thumbnail Downloaden ging mis, Naitive tool gebruiken...
-					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
-					thumbnailbestemming="/Users/$USER/Documents/youtube-dl/outfile.jpg"
+				#thumbnailbestemming="/Users/$USER/Documents/youtube-dl/$yourlid.jpg"
+				thumbnailbestemming="/Users/$USER/Documents/youtube-dl/outfile.jpg"
+				wget -O ~/Documents/youtube-dl/outfile.jpg https://img.youtube.com/vi/$yourlid/maxresdefault.jpg &>/dev/null||wgetgingfout=1
+				if [[ $wgetgingfout == 1 ]]; then
+					echo MAX kwaliteit Thumbnail Downloaden ging mis, Naitive tool gebruiken...
+					rm ~/Documents/youtube-dl/outfile.jpg
 				fi
 				while true; do
 					trap - SIGINT
 					trap
 					#--embed-thumbnail
-					/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+					if [[ $wgetgingfout == 1 ]]; then
+						/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+					else
+						/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+						eyeD3 --add-image "/Users/$USER/Documents/youtube-dl/outfile.jpg:FRONT_COVER" "$filenaamverbeterd" &>/dev/null
+						rm ~/Documents/youtube-dl/outfile.jpg
+					fi
 					if [[ $goedgegaan == 1 ]]; then
 						break
 					else
@@ -889,7 +895,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						fi
 					fi
 				done
-				eyeD3 --add-image="$thumbnailbestemming":FRONT_COVER "$filenaamverbeterd" &>/dev/null
 			fi
 		else
 			ls ~/Documents/youtube-dl/"`basename "$anderefile"`"&>/dev/null||mv "$anderefile" ~/Documents/youtube-dl/"`basename "$anderefile"`"
@@ -1494,17 +1499,25 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							fotocrop
 							rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
 						else
-							if [[ -f $instaurl ]]; then
-								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
+							if [[ -f `echo $instaurl|sed -e "s/|.*//"` ]]; then
+								instaurlextentie=`echo $instaurl|sed -e "s/|.*//"|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
 								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
+									cp `echo $instaurl|sed -e "s/|.*//"` ~/Documents/youtube-dl/outfile.jpg
 									fotocrop
 								else
-									echo "File type niet ondersteund, eigen video wordt gebruikt"
-									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									if [[ $yourl != "" ]]; then
+										echo "File type niet ondersteund, eigen video wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									else
+										exit 1
+									fi
 								fi 
 							else
-								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								if [[ $yourl == "" ]]; then
+									echo "iets ging fout met je -T bestand/url"
+								else
+									echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								fi
 								fotokeuze=1
 								if [[ $fotokeuze == 1 ]]; then
 									instaurlzonderpipe=`echo "$instaurl"|sed -e "s/|.*//"`
@@ -1514,8 +1527,10 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 									fi		
 								fi
 								if [[ $fotokeuze == 2 ]]; then
-									echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+									if [[ $yourl != "" ]]; then
+										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									fi		
 								fi
 							fi
 						fi
@@ -1529,11 +1544,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
 					lijst=`echo "$lijst $huidigegroep"` 
 				done
-				lijst=`echo "$lijst"|sed -e "s/ //"`
-				lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
+				lijst=`echo "$lijst"|sed -e "s% %%"`
+				lijst2=`echo "#$lijst"|sed -e "s% % #%g"`
 				artiesttitelzondergroep=`echo $verbeterdartiest`
 				for f in ${lijst2[@]}; do
-					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
+					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s%$f % %"`
 				done
 				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
 				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
@@ -1574,28 +1589,40 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							fotocrop
 							rm ~/Documents/youtube-dl/thumbnailbestand.jpg &> /dev/null
 						else
-							if [[ -f $instaurl ]]; then
-								instaurlextentie=`echo $instaurl|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
+							if [[ -f `echo $instaurl|sed -e "s/|.*//"` ]]; then
+								instaurlextentie=`echo $instaurl|sed -e "s/|.*//"|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
 								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-									cp "$instaurl" ~/Documents/youtube-dl/outfile.jpg
+									cp `echo $instaurl|sed -e "s/|.*//"` ~/Documents/youtube-dl/outfile.jpg
 									fotocrop
 								else
-									echo "File type niet ondersteund, eigen video wordt gebruikt"
-									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									if [[ $yourl != "" ]]; then
+										echo "File type niet ondersteund, eigen video wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									else
+										exit 1
+									fi
 								fi 
 							else
-								echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								if [[ $yourl == "" ]]; then
+									echo "iets ging fout met je -T bestand/url"
+								else
+									echo "Geen standaard ondersteunde link herkend, huidige link proberen te downloaden"
+								fi
 								fotokeuze=1
 								if [[ $fotokeuze == 1 ]]; then
 									instaurlzonderpipe=`echo "$instaurl"|sed -e "s/|.*//"`
 									wget -O ~/Documents/youtube-dl/outfile.jpg "$instaurlzonderpipe" &> /dev/null||fotokeuze=2
 									if [[ $fotokeuze != 2 ]]; then
 										fotocrop
-									fi		
+									fi
 								fi
 								if [[ $fotokeuze == 2 ]]; then
-									echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-									wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null		
+									if [[ $yourl != "" ]]; then
+										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
+										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+									else
+										exit 1
+									fi
 								fi
 							fi
 						fi
@@ -1609,14 +1636,14 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					huidigegroep=`echo "$verbeterdartiest"|awk 'BEGIN {FS="#"}{print $"'$nt'"}'|awk 'BEGIN {FS=" "}{print $1}'`
 					lijst=`echo "$lijst $huidigegroep"` 
 				done
-				lijst=`echo "$lijst"|sed -e "s/ //"`
-				lijst2=`echo "#$lijst"|sed -e "s/ / #/g"`
+				lijst=`echo "$lijst"|sed -e "s% %%"`
+				lijst2=`echo "#$lijst"|sed -e "s% % #%g"`
 				artiesttitelzondergroep=`echo $verbeterdartiest`
 				for f in ${lijst2[@]}; do
-					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s/$f / /"`
+					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s%$f % %"`
 				done
-				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
@@ -1830,7 +1857,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				else
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					if [[ $seconde == "c" ]]; then
-						ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					else
 						avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					fi
@@ -1840,7 +1868,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
 					if [[ $fadeinsec != 0 ]]; then
 						if [[ $fadeinsec == "c" ]]; then
-							ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
 						else
 							ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
@@ -1894,7 +1923,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			set newFile to "'"/Users/$USER/Documents/youtube-dl/$f"'"
 			set toPlaylist to "Library"
 			add newFile to playlist toPlaylist
-			end tell'; echo "/Users/"$USER"/Documents/youtube-dl$f";fi
+			end tell'&>/dev/null;fi #;echo "/Users/"$USER"/Documents/youtube-dl/$f"
 		done
 	fi
 	if [[ "$vofa" == "v" ]]; then
