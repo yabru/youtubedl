@@ -167,8 +167,9 @@ toolscheck () {
 		echo "geinstalleerde dependencies: "${installeerlijst[@]}""
 		exit 0
 	fi
-	which pip &>/dev/null||alias pip=pip3
-	which deep-translator&>/dev/null||pip install -U deep_translator
+	pip=pip
+	which pip &>/dev/null||pip=pip3
+	which deep-translator&>/dev/null||$pip install -U deep_translator
 }
 install () {
 	locatie
