@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.7.2'
-commit='Kleine updates hier  daar'
+version='4.7.3'
+commit='updatefunctie'
 tools=(AtomicParsley curl ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -13,6 +13,10 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
+verdonkeringspercentage=
+if [[ $verdonkeringspercentage == "" ]]; then
+	verdonkeringspercentage=40
+fi
 berekenmin () {
 	urenvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $1}'`
 	urenna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $1}'`
@@ -209,7 +213,7 @@ install () {
 	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list| sed -e "/^$/d"`
 	rm ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	if [[ $installeeraplicaties != "" ]]; then
-		echo "tools aan het instaleren! (dit kan meerdere minuuten duren)"
+		echo "tools aan het instaleren! (dit kan LANG duren, Wees geduldig)"
 		installeerlijst=($installeeraplicaties)
 		t=""
 		hoeveelheidnieuweprogrammas=`echo "${#installeerlijst[@]}"`
@@ -1563,7 +1567,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					else
 						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+					convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
@@ -1654,7 +1658,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					else
 						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize 40% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+
+					convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
@@ -2015,7 +2020,7 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 		fi
 	fi
 fi
-echo isync poging
 if [[ $isync == "true" ]]||[[ $syncactivatie == 1 ]]; then
+	echo isync poging
 	syncfunc&
 fi
