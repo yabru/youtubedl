@@ -1,6 +1,6 @@
 #!/bin/bash
 version='4.7.3'
-commit='python toegevoegd als instalatie'
+commit='test'
 tools=(AtomicParsley curl python ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -167,6 +167,7 @@ toolscheck () {
 		echo "geinstalleerde dependencies: "${installeerlijst[@]}""
 		exit 0
 	fi
+	which pip &>/dev/null||allias pip=pip3
 	which deep-translator&>/dev/null||pip install -U deep_translator
 }
 install () {
