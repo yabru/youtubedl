@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.7.3'
-commit='test'
+version='4.9.0'
+commit='complete playlist ondersteuning met -u'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -699,6 +699,17 @@ fi
 if [[ $syncactivatie == 1 ]]&&[[ $yourl == "" ]]; then
 	syncfunc&>/dev/null&
 	exit 0
+fi
+if [[ $yourl == *"youtube.com/playlist"* ]]; then
+	if [[ $vofa == a ]]; then
+		command="youtubedl -au `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
+		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
+	else
+		command="youtubedl -u  `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
+		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
+	fi
+	$command
+	exit
 fi
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
