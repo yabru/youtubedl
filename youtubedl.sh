@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.0'
-commit='complete playlist ondersteuning met -u'
+version='4.9.1'
+commit='patch voor playlisten downloaden'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -702,14 +702,18 @@ if [[ $syncactivatie == 1 ]]&&[[ $yourl == "" ]]; then
 fi
 if [[ $yourl == *"youtube.com/playlist"* ]]; then
 	if [[ $vofa == a ]]; then
-		command="youtubedl -au `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
-		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
+		yourl=`/usr/local/bin/youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
+		yourl="`echo $yourl|rev|sed -e "s/\\\\\\//"|rev`"
+		echo "`which youtubedl` -au $yourl" > ~/Documents/youtube-dl/.$random-script.sh
+		chmod 755 ~/Documents/youtube-dl/.$random-script.sh
+		sleep 1&&rm ~/Documents/youtube-dl/.$random-script.sh&
+		bash ~/Documents/youtube-dl/.$random-script.sh
+		exit
 	else
-		command="youtubedl -u  `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
+		command="youtubedl -u `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
 		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
 	fi
-	$command
-	exit
+	command="$command ; exit"
 fi
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
