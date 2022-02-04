@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.1'
-commit='patch voor playlisten downloaden'
+version='4.9.2'
+commit='Kleine bugfixes'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1523,7 +1523,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							if [[ -f `echo $instaurl|sed -e "s/|.*//"` ]]; then
 								instaurlextentie=`echo $instaurl|sed -e "s/|.*//"|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
 								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-									cp `echo $instaurl|sed -e "s/|.*//"` ~/Documents/youtube-dl/outfile.jpg
+									cp "`echo "$instaurl"|sed -e "s/|.*//"`" ~/Documents/youtube-dl/outfile.jpg
 									fotocrop
 								else
 									if [[ $yourl != "" ]]; then
@@ -1613,7 +1613,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							if [[ -f `echo $instaurl|sed -e "s/|.*//"` ]]; then
 								instaurlextentie=`echo $instaurl|sed -e "s/|.*//"|rev|awk 'BEGIN {FS="."}{print $1}'|rev`
 								if [[ $instaurlextentie == "jpg" ]]||[[ $instaurlextentie == "JPG" ]]||[[ $instaurlextentie == "jpeg" ]]||[[ $instaurlextentie == "JPEG" ]]||[[ $instaurlextentie == "png" ]]||[[ $instaurlextentie == "PNG" ]]; then
-									cp `echo $instaurl|sed -e "s/|.*//"` ~/Documents/youtube-dl/outfile.jpg
+									cp "`echo "$instaurl"|sed -e "s/|.*//"`" ~/Documents/youtube-dl/outfile.jpg
 									fotocrop
 								else
 									if [[ $yourl != "" ]]; then
