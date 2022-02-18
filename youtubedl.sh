@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.2'
-commit='Kleine bugfixes'
+version='4.9.3'
+commit='Grote image updates'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -945,7 +945,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		else
 			artiestnaam=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
 			artiestnaam=`echo "$artiestnaam"|sed -e "s/ / /g"`
-			artiestnaam=`echo "$artiestnaam"|iconv -c -f utf8 -t ascii`
+			if [[ $manueelinput == "" ]]; then
+				artiestnaam=`echo "$artiestnaam"|iconv -c -f utf8 -t ascii`
+			fi
 			liedtitel=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'`
 		fi
 		if [[ `echo "$artiestnaam"|wc -c` == `echo "$titel"|wc -c` ]]; then
@@ -1202,6 +1204,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="|"}{print $1}'`
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="("}{print $1}'`
 		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="["}{print $1}'`
+		liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="{"}{print $1}'`
 		if [[ $seperator != "" ]]; then
 			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="'$seperator'"}{print $1}'`
 		fi
@@ -1571,8 +1574,17 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				for f in ${lijst2[@]}; do
 					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s%$f % %"`
 				done
-				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
-				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s/\'/\\\\\\\'/g"`
+				if [[ $manueelinput == "" ]]; then
+					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				else
+					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				fi
+				if [[ $manueelinput == *"|||*" ]]; then
+					verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
+					liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev`
+				fi
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
@@ -1663,8 +1675,17 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				for f in ${lijst2[@]}; do
 					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s%$f % %"`
 				done
-				liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-				verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				if [[ $manueelinput == "" ]]; then
+					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				else
+					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				fi
+				if [[ $manueelinput == *"|||*" ]]; then
+					verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'|tr [:lower:] [:upper:]`
+					liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev|tr [:lower:] [:upper:]`
+				fi
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
@@ -1675,7 +1696,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					else
 						titelvergrotingsfactor=235
 					fi
-
 					convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
