@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.4'
-commit='url input verbeterd'
+version='4.9.5'
+commit='update notificatie'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -13,10 +13,11 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
-verdonkeringspercentage=10
+verdonkeringspercentage=
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
 fi
+[[ $(cat $(which youtubedl)|head -2|tail -1) == $(curl -s https://raw.githubusercontent.com/yabru/youtubedl/main/youtubedl.sh|head -2|tail -1) ]]||osascript -e 'display notification "Er is een nieuwe update beschickbaar run: youtubedl -U om te updaten." with title "Youtube-dl" subtitle "Github."'
 berekenmin () {
 	urenvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $1}'`
 	urenna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $1}'`
@@ -408,7 +409,7 @@ update () {
 	chmod 755 `realpath $0`
 	versienaupdate=`head -2 ~/.github/youtubedl.sh|grep version|sed -e "s/version=//"|sed -e "s/'//g"`
 	if [[ $versievoorupdate != $versienaupdate ]]; then
-		echo -e "\nGeupdate naar versie: $versienaupdate\nmet Path bericht: `head -3 ~/.github/youtubedl.sh|tail -1|sed -e "s/commit='//"|sed -e "s/'//g"`\n"
+		echo -e "\nGeupdate naar versie: $versienaupdate\nMet Patch Bericht: `head -3 ~/.github/youtubedl.sh|tail -1|sed -e "s/commit='//"|sed -e "s/'//g"`\n"
 	fi
 	#brew doctor &> /dev/null & while `ps -ef | grep br[e]w > /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
 	brew outdated|xargs> ~/Documents/youtube-dl/.outdated.txt& while `ps -ef | grep br[e]w|grep outd[a]ted &> /dev/null`;do for s in . .. ...; do printf "\rChecken voor updates$s   	";sleep .5;done;done
@@ -705,7 +706,6 @@ for l in $@; do
 		start=0
 		break
 	fi
-	echo $l
 	if [[ $start == 1 ]]; then
 		yourl="$yourl $l"
 	fi
@@ -714,7 +714,6 @@ for l in $@; do
 	fi
 done
 #yourl=`echo $yourl|sed -e "s/ //"`
-echo $yourl
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
 	echo "youtubedl version $version"
@@ -801,7 +800,6 @@ if [[ $yourltweedelinkcheck != "" ]]; then
 	allelinksbehalvedeeerste=`echo "$yourl"|sed -e "s|$yourleerstelink ||"`
 	yourl=`echo $yourleerstelink`
 fi
-echo $yourl
 if [[ $yourl == *"youtube.com/playlist"* ]]; then
 	if [[ $vofa == a ]]; then
 		yourl=`/usr/local/bin/youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
@@ -905,8 +903,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
 				#thumbnailbestemming="/Users/$USER/Documents/youtube-dl/$yourlid.jpg"
 				thumbnailbestemming="/Users/$USER/Documents/youtube-dl/outfile.jpg"
-				echo $yourlid
-				echo "https://img.youtube.com/vi/$yourlid/maxresdefault.jpg"
 				wget -O ~/Documents/youtube-dl/outfile.jpg https://img.youtube.com/vi/$yourlid/maxresdefault.jpg &>/dev/null||wgetgingfout=1
 				if [[ $wgetgingfout == 1 ]]; then
 					echo MAX kwaliteit Thumbnail Downloaden ging mis, Naitive tool gebruiken...
