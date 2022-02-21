@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.3'
-commit='Grote image updates'
+version='4.9.4'
+commit='url input verbeterd'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -13,7 +13,7 @@ random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
 toegang="0"
 vofa=v
 image="0"
-verdonkeringspercentage=
+verdonkeringspercentage=10
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
 fi
@@ -619,10 +619,10 @@ mind () {
 	fi
 	exit 0
 }
-while getopts u:haridfobs:e:t:UTm:g:vy:p:F:S flag;
+while getopts uharidfobs:e:t:UTm:g:vy:p:F:S flag;
 do
 	case "${flag}" in
-	u)			yourl=${OPTARG};;
+	u)			yourl=" ";;
 
 	h)			help;;
 
@@ -700,21 +700,21 @@ if [[ $syncactivatie == 1 ]]&&[[ $yourl == "" ]]; then
 	syncfunc&>/dev/null&
 	exit 0
 fi
-if [[ $yourl == *"youtube.com/playlist"* ]]; then
-	if [[ $vofa == a ]]; then
-		yourl=`/usr/local/bin/youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
-		yourl="`echo $yourl|rev|sed -e "s/\\\\\\//"|rev`"
-		echo "`which youtubedl` -au $yourl" > ~/Documents/youtube-dl/.$random-script.sh
-		chmod 755 ~/Documents/youtube-dl/.$random-script.sh
-		sleep 1&&rm ~/Documents/youtube-dl/.$random-script.sh&
-		bash ~/Documents/youtube-dl/.$random-script.sh
-		exit
-	else
-		command="youtubedl -u `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
-		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
+for l in $@; do
+	if [[ $l == "-"* ]]&&[[ $start == 1 ]]; then
+		start=0
+		break
 	fi
-	command="$command ; exit"
-fi
+	echo $l
+	if [[ $start == 1 ]]; then
+		yourl="$yourl $l"
+	fi
+	if [[ $l == "-"* ]]&&[[ $l == *"u"* ]]; then
+		start=1
+	fi
+done
+#yourl=`echo $yourl|sed -e "s/ //"`
+echo $yourl
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
 	echo "youtubedl version $version"
@@ -801,6 +801,22 @@ if [[ $yourltweedelinkcheck != "" ]]; then
 	allelinksbehalvedeeerste=`echo "$yourl"|sed -e "s|$yourleerstelink ||"`
 	yourl=`echo $yourleerstelink`
 fi
+echo $yourl
+if [[ $yourl == *"youtube.com/playlist"* ]]; then
+	if [[ $vofa == a ]]; then
+		yourl=`/usr/local/bin/youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
+		yourl="`echo $yourl|rev|sed -e "s/\\\\\\//"|rev`"
+		echo "`which youtubedl` -au $yourl" > ~/Documents/youtube-dl/.$random-script.sh
+		chmod 755 ~/Documents/youtube-dl/.$random-script.sh
+		sleep 1&&rm ~/Documents/youtube-dl/.$random-script.sh&
+		bash ~/Documents/youtube-dl/.$random-script.sh
+		exit
+	else
+		command="youtubedl -u `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
+		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
+	fi
+	command="$command ; exit"
+fi
 if [[ $image == 1 ]]; then
 	if [[ $instaurl == "" ]]; then
 		filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
@@ -860,7 +876,7 @@ if [[ $anderefile == "" ]]; then
 		fi
 		if [[ "$toegang" == "0" ]]; #als er iets mis ging met een filenaam geven dan komt dit
 		then
-			echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [youtubedl -h]\n"
+			echo -e "\nERROR: Geen geldig YouTube URL gevonden\nVoor meer hulp, [ youtubedl -h ]\n"
 			exit 1
 		fi
 	fi
@@ -889,6 +905,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
 				#thumbnailbestemming="/Users/$USER/Documents/youtube-dl/$yourlid.jpg"
 				thumbnailbestemming="/Users/$USER/Documents/youtube-dl/outfile.jpg"
+				echo $yourlid
+				echo "https://img.youtube.com/vi/$yourlid/maxresdefault.jpg"
 				wget -O ~/Documents/youtube-dl/outfile.jpg https://img.youtube.com/vi/$yourlid/maxresdefault.jpg &>/dev/null||wgetgingfout=1
 				if [[ $wgetgingfout == 1 ]]; then
 					echo MAX kwaliteit Thumbnail Downloaden ging mis, Naitive tool gebruiken...
@@ -1961,12 +1979,17 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		else
 			echo "subs niet beschikbaar"
 		fi
-		for f in `ls -art /Users/$USER/Documents/youtube-dl|tail -3 |sed -e "s/ /347345749756/g"|awk 1 ORS=" "`;do if [[ $f != "."* ]]; then f=`echo $f|sed -e "s/347345749756/ /g"`; osascript -e 'tell application "Music"
-			set newFile to "'"/Users/$USER/Documents/youtube-dl/$f"'"
-			set toPlaylist to "Library"
-			add newFile to playlist toPlaylist
-			end tell'&>/dev/null;fi #;echo "/Users/"$USER"/Documents/youtube-dl/$f"
-		done
+		#for f in `ls -art /Users/$USER/Documents/youtube-dl|tail -3 |sed -e "s/ /347345749756/g"|awk 1 ORS=" "`;do if [[ $f != "."* ]]; then f=`echo $f|sed -e "s/347345749756/ /g"`; osascript -e 'tell application "Music"
+		#	set newFile to "'"/Users/$USER/Documents/youtube-dl/$f"'"
+		#	set toPlaylist to "Library"
+		#	add newFile to playlist toPlaylist
+		#	end tell'&>/dev/null;fi #;echo "/Users/"$USER"/Documents/youtube-dl/$f"
+		#done
+		osascript -e 'tell application "Music"
+		set newFile to "'"/Users/$USER/Documents/youtube-dl/`ls -t Documents/youtube-dl/|head -1`"'"
+		set toPlaylist to "Library"
+		add newFile to playlist toPlaylist
+		end tell'&>/dev/null
 	fi
 	if [[ "$vofa" == "v" ]]; then
 		filenaamverbeterd=`echo "$filenaam"|sed -e "s/$typ*//"`
