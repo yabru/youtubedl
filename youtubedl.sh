@@ -1,5 +1,5 @@
 #!/bin/bash
-version='4.9.5'
+version='4.9.6'
 commit='update notificatie'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
