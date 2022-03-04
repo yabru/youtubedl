@@ -1,6 +1,6 @@
 #!/bin/bash
 version='4.9.6'
-commit='update notificatie'
+commit='Kleine bugfixes hier en daar'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -17,7 +17,6 @@ verdonkeringspercentage=
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
 fi
-[[ $(cat $(which youtubedl)|head -2|tail -1) == $(curl -s https://raw.githubusercontent.com/yabru/youtubedl/main/youtubedl.sh|head -2|tail -1) ]]||osascript -e 'display notification "Er is een nieuwe update beschickbaar run: youtubedl -U om te updaten." with title "Youtube-dl" subtitle "Github."'
 berekenmin () {
 	urenvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $1}'`
 	urenna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $1}'`
@@ -91,7 +90,11 @@ cleanupfiles () {
 	fi
 	exit 1
 }
+updatecheck () {
+	[[ $(cat $(which youtubedl)|head -2|tail -1) == $(curl -s https://raw.githubusercontent.com/yabru/youtubedl/main/youtubedl.sh|head -2|tail -1) ]]||osascript -e 'display notification "Er is een nieuwe update beschickbaar run: youtubedl -U om te updaten." with title "Youtube-dl" subtitle "Github."'
+}
 help () {
+	updatecheck&
 	echo ""
 	echo "youtubedl -u \"YouTube-url\" [options]"
 	echo ""
@@ -116,7 +119,7 @@ help () {
 	echo ""
 	echo ""
 	echo "metadata (audio)"
-	echo "-m	[MANIPULATIE] 			manipuleer de titel van de titel zodat het script denkt dat je input de titel is die hij dan verwerkt (handig voor -T)"
+	echo "-m	[MANIPULATIE] 			manipuleer de titel van de titel zodat het script denkt dat je input de titel is die hij dan verwerkt (handig voor -T) (eindig met |||* om alle lied syntax te negeren)"
 	echo "-r	[ROTZOOI TITEL]			Voor min a, een titel zonder goede structuur"
 	echo "-g	[GENRE]				Zet voor de huidge download een andere genre voor de huidige download"
 	echo "-T	[THUMBNAIL] 			Genereerd zelf een thumbnail met text van een foto via een url na argument (ondersteund: youtube_link, insta_link, bestanden, andere foto link)"
@@ -134,7 +137,7 @@ help () {
 	echo "-h	[HELP]				Laat een korte hulp pagina zien (Deze pagina)"
 	echo "-b	[BEIDE]				Download beide video en audio in één commando (maar één link mogelijk)"
 	echo "-v	[VERSIE]			laat de huidige versie van het script zien met het laatste update bericht"
-	echo "-s	[SYNC]				Synced al je nummers met je iPhone"
+	echo "-S	[SYNC]				Synced al je nummers met je iPhone"
 	exit 10
 }
 toolscheck () {
@@ -211,7 +214,7 @@ install () {
 		echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	done
 	touch ~/Documents/youtube-dl/.gedaan
-	sleep .2
+	sleep .3
 	rm ~/Documents/youtube-dl/.gedaan
 	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list| sed -e "/^$/d"`
 	rm ~/Documents/youtube-dl/.nietgeinstalleerd.list
@@ -620,10 +623,10 @@ mind () {
 	fi
 	exit 0
 }
-while getopts uharidfobs:e:t:UTm:g:vy:p:F:S flag;
+while getopts u:haridfobs:e:t:UTm:g:vy:p:F:S flag;
 do
 	case "${flag}" in
-	u)			yourl=" ";;
+	u)			yourl=${OPTARG};;
 
 	h)			help;;
 
@@ -701,19 +704,18 @@ if [[ $syncactivatie == 1 ]]&&[[ $yourl == "" ]]; then
 	syncfunc&>/dev/null&
 	exit 0
 fi
-for l in $@; do
-	if [[ $l == "-"* ]]&&[[ $start == 1 ]]; then
-		start=0
-		break
-	fi
-	if [[ $start == 1 ]]; then
-		yourl="$yourl $l"
-	fi
-	if [[ $l == "-"* ]]&&[[ $l == *"u"* ]]; then
-		start=1
-	fi
-done
-#yourl=`echo $yourl|sed -e "s/ //"`
+#for l in $@; do
+#	if [[ $l == "-"* ]]&&[[ $start == 1 ]]; then
+#		start=0
+#		break
+#	fi
+#	if [[ $start == 1 ]]; then
+#		yourl="$yourl $l"
+#	fi
+#	if [[ $l == "-"* ]]&&[[ $l == *"u"* ]]; then
+#		start=1
+#	fi
+#done
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
 if [[ $versioncheck == 1 ]]; then
 	echo "youtubedl version $version"
@@ -749,7 +751,7 @@ if [[ $seconde != "" ]]; then
 	secondecijfercheck=`echo $seconde|sed -e "s/://"`
 	secondecijfercheck=`echo $secondecijfercheck|sed -e "s/\.//g"`
 	secondecijfercheck=`echo $secondecijfercheck|sed -e "s/|//"`
-	if ! [[ "$secondecijfercheck" =~ ^[0-9]+$ ]]&&[[ "$secondecijfercheck" != "c" ]]; then
+	if ! [[ "$secondecijfercheck" =~ ^[0-9]+$ ]]&&[[ "$secondecijfercheck" != *"c" ]]; then
 		echo "Gebruik cijfers bij -s"
 		exit 1
 	fi
@@ -1004,6 +1006,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		while [ "$n" -lt $hoeveelxtussenhaakjes ]; do
 			n=$(( n + 1 ))
 			mogelijkeprod=`echo $liedtitel|awk 'BEGIN {FS="("}{print $"'$n'"}'|awk 'BEGIN {FS="|"}{print $1}'|awk 'BEGIN {FS="("}{print $1}'|awk 'BEGIN {FS="["}{print $1}'|awk 'BEGIN {FS="]"}{print $1}'|awk 'BEGIN {FS="{"}{print $1}'|awk 'BEGIN {FS="}"}{print $1}'|awk 'BEGIN {FS=")"}{print $1}'`
+			echo $mogelijkeprod
 			proddetectie
 			if [[ $prodintitel == "1" ]]; then
 				engeneer=`echo $mogelijkeprod|awk 'BEGIN {FS="'$seperator'"}{print $2}'`
@@ -1617,9 +1620,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
-				sleep .2
+				sleep .
 				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rThumbnail gegenereerd.                                            "
+				echo -ne "\r$(tput cuu1)$(tput dl1)"
+				echo "                                      "
+				echo -ne "\r$(tput cuu1)$(tput dl1)"
+				echo "Thumbnail gegenereerd."
 				eenwhileloopgebeurt=1
 			else
 				#########################
@@ -1714,10 +1720,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
-				sleep .2
+				sleep .3
 				rm ~/Documents/youtube-dl/.gedaan
-				echo -ne "\rThumbnail gegenereerd.                                            "
-				echo gedaan
+				echo -ne "\r$(tput cuu1)$(tput dl1)"
+				echo "                                      "
+				echo -ne "\r$(tput cuu1)$(tput dl1)"
+				echo -ne "Thumbnail gegenereerd."
 				exit
 				#########################
 			fi
@@ -1739,9 +1747,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -af "volume=9dB" -ab 320k "$filenaamverbeterd" &>/dev/null
 				#ffmpeg -i ~/Documents/youtube-dl/outfile.mp3 -filter:a loudnorm -ab 320k "$filenaamverbeterd" &>/dev/null
 			touch ~/Documents/youtube-dl/.gedaan
-			sleep .2
+			sleep .3
 			rm ~/Documents/youtube-dl/.gedaan
-			echo -ne "\rAudio enhansed.                                            "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "                                      "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "Audio enhansed."
 			eenwhileloopgebeurt=1
 		else
 			if [[ $volumepc != "" ]]; then
@@ -1781,9 +1792,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				fi
 				rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 			touch ~/Documents/youtube-dl/.gedaan
-			sleep .2
+			sleep .3
 			rm ~/Documents/youtube-dl/.gedaan
-			echo -ne "\rAudio bijgesneden                                            "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "                                      "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "Audio bijgesneden"
 			eenwhileloopgebeurt=1
 		fi
 		minuut=0
@@ -1856,9 +1870,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				rm ~/Documents/youtube-dl/outputfade1.mp3 ~/Documents/youtube-dl/outputfade2.mp3 &> /dev/null
 				tweedeliedcheck=1
 			touch ~/Documents/youtube-dl/.gedaan
-			sleep .2
+			sleep .3
 			rm ~/Documents/youtube-dl/.gedaan
-			echo -ne "\rSplitten gedaan                                            "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "                                      "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "Splitten gedaan."
 			eenwhileloopgebeurt=1
 		fi
 		minuut=0
@@ -1880,40 +1897,18 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					fadeinsec=2
 				fi
 			else
-				fadeinsec=0
+				if [[ $fadeinsec != "c" ]]; then
+					echo "fadeinsec is niet c">>tijdlijkkkk.txt;open tijdlijkkkk.txt
+					fadeinsec=0
+				fi
 			fi
 			echtgedaan=0
 			echo ""
 			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-				if [[ $tweedelied != "" ]]; then
-					ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-					if [[ $seconde == "c" ]]; then
-						ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-					else
-						avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-					fi
-					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
-					rm "$filenaamverbeterdpt1" &> /dev/null
-					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
-					if [[ $fadeinsec != 0 ]]; then
-						if [[ $fadeinsec == "c" ]]; then
-							ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
-						else
-							ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
-							sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
-							ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
-							rm "$filenaamverbeterdpt1" &> /dev/null
-							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
-							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
-						fi
-					fi 
-					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
-				else
+				if [[ $tweedelied == "" ]]; then
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					if [[ $seconde == "c" ]]; then
-						#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+						#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 						ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					else
 						avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
@@ -1921,10 +1916,12 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
 					rm "$filenaamverbeterd" &> /dev/null
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
-					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
+					mv ~/Documents/youtube-dl/outfile.mp3 "$filenaamverbeterd"
+					#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
 					if [[ $fadeinsec != 0 ]]; then
 						if [[ $fadeinsec == "c" ]]; then
-							#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-10dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							echo "ffmpeg wordt geactiveerd!">>tijdlijkkkk.txt;open tijdlijkkkk.txt
+							#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
 						else
@@ -1937,18 +1934,46 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						fi
 					fi
 					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
+				else
+					ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+					if [[ $seconde == "c" ]]; then
+						ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					else
+						avconv -i "$filenaamverbeterdpt1" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+					fi
+					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "/Users/$USER/Documents/youtube-dl/outfile.mp3" &> /dev/null
+					rm "$filenaamverbeterdpt1" &> /dev/null
+					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
+					avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterdpt1" &> /dev/null						
+					if [[ $fadeinsec != 0 ]]; then
+						if [[ $fadeinsec == "c" ]]; then
+							ffmpeg -i "$filenaamverbeterdpt1" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
+						else
+							ffmpeg -i "$filenaamverbeterdpt1" ~/Documents/youtube-dl/file.jpg &> /dev/null
+							sox "$filenaamverbeterdpt1" ~/Documents/youtube-dl/outputfade.mp3 fade h $fadeinsec -0 0 &> /dev/null
+							ffmpeg -i "$filenaamverbeterdpt1" -i ~/Documents/youtube-dl/outputfade.mp3 -map 1 -map_metadata 0 -c copy -movflags use_metadata_tags ~/Documents/youtube-dl/tijdelijk.mp3  &> /dev/null
+							rm "$filenaamverbeterdpt1" &> /dev/null
+							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterdpt1"  &> /dev/null
+							eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterdpt1" &> /dev/null
+						fi
+					fi 
+					rm ~/Documents/youtube-dl/outfile.mp3 ~/Documents/youtube-dl/file.jpg ~/Documents/youtube-dl/outputfade.mp3 &> /dev/null
 				fi
 			touch ~/Documents/youtube-dl/.gedaan
 			sleep .3
 			rm ~/Documents/youtube-dl/.gedaan
-			echo -ne "\rAudio bijgesneden                                            "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "                                      "
+			echo -ne "\r$(tput cuu1)$(tput dl1)"
+			echo "Audio bijgesneden."
 			eenwhileloopgebeurt=1
 		fi
-		if [[ $eenwhileloopgebeurt == 1 ]]; then
-			sleep .2
-			echo ""
-			echo -ne "\r"
-		fi
+#		if [[ $eenwhileloopgebeurt == 1 ]]; then
+#			sleep .3
+#			echo ""
+#			echo -ne "\r"
+#		fi
 		youtube-dl $yourl --write-sub --convert-subs srt --skip-download -o $random &>/dev/null
 		ls "$random"* &>/dev/null&&subsgeslaagd=1
 		if [[ $subsgeslaagd == 1 ]]; then
@@ -2078,5 +2103,5 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 fi
 if [[ $isync == "true" ]]||[[ $syncactivatie == 1 ]]; then
 	echo isync poging
-	syncfunc&
+	syncfunc&>/dev/null&
 fi
