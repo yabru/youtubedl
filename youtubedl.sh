@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.6'
-commit='Kleine bugfixes hier en daar'
+version='4.7.8'
+commit='brumfix'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -179,7 +179,7 @@ install () {
 	locatie
 	touch ~/Documents/youtube-dl/.black.list
 	touch ~/Documents/youtube-dl/.white.list
-	ls /usr/local/bin/brew &> /dev/null ||checkinstall=1
+	which brew &> /dev/null ||checkinstall=1
 	if [[ $checkinstall == 1 ]]; then
 		echo -e "je mist Homebrew, Dit is een essentieel component van deze code.."
 		echo " "
@@ -2103,5 +2103,5 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 fi
 if [[ $isync == "true" ]]||[[ $syncactivatie == 1 ]]; then
 	echo isync poging
-	syncfunc&>/dev/null&
+	syncfunc &>/dev/null&
 fi
