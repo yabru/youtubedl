@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.0'
-commit='brumfix3'
+version='4.8.1'
+commit='brumfix4'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -146,8 +146,8 @@ toolscheck () {
 		FILE="$cellarpath/$t"
 		echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	done
-	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list| sed -e "/^$/d"`
-	rm ~/Documents/youtube-dl/.nietgeinstalleerd.list
+	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list 2>/dev/null| sed -e "/^$/d"`
+	rm ~/Documents/youtube-dl/.nietgeinstalleerd.list 2>/dev/null 
 	if [[ $installeeraplicaties != "" ]]; then
 		installeerlijst=($installeeraplicaties)
 		t=""
@@ -178,8 +178,6 @@ toolscheck () {
 }
 install () {
 	locatie
-	touch ~/Documents/youtube-dl/.black.list
-	touch ~/Documents/youtube-dl/.white.list
 	which brew &> /dev/null ||checkinstall=1
 	if [[ $checkinstall == 1 ]]; then
 		echo -e "je mist Homebrew, Dit is een essentieel component van deze code.."
@@ -210,6 +208,8 @@ install () {
 		checkinstall=0
 		ietsgedaan=1
 	fi
+	touch ~/Documents/youtube-dl/.black.list
+	touch ~/Documents/youtube-dl/.white.list
 	for t in ${tools[@]}; do
 		cellarpath=$(echo `which brew|sed -e "s|/bin/brew||"`/Cellar)
 		FILE="$cellarpath/$t"
@@ -219,8 +219,8 @@ install () {
 	touch ~/Documents/youtube-dl/.gedaan
 	sleep .3
 	rm ~/Documents/youtube-dl/.gedaan
-	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list| sed -e "/^$/d"`
-	rm ~/Documents/youtube-dl/.nietgeinstalleerd.list
+	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list 2>/dev/null | sed -e "/^$/d"`
+	rm ~/Documents/youtube-dl/.nietgeinstalleerd.list 2>/dev/null
 	if [[ $installeeraplicaties != "" ]]; then
 		echo "tools aan het instaleren! (dit kan LANG duren, Wees geduldig)"
 		installeerlijst=($installeeraplicaties)
@@ -681,6 +681,11 @@ do
 	*)			exit 0;;
 	esac
 done
+if [[ $versioncheck == 1 ]]; then
+	echo "youtubedl version $version"
+	echo "laatste patch bericht: $commit"
+	exit 0
+fi
 genretest=`cat ~/Documents/youtube-dl/.config.yt 2>/dev/null|grep -i "^GENRE="|sed -e "s/GENRE=//"`
 if [[ $genretest == "" ]]; then
 	echo "run youtubedl -i"
@@ -720,11 +725,6 @@ fi
 #	fi
 #done
 rm ~/Documents/youtube-dl/.vorigegroepen.list &> /dev/null
-if [[ $versioncheck == 1 ]]; then
-	echo "youtubedl version $version"
-	echo "laatste patch bericht: $commit"
-	exit 0
-fi
 locatie
 toolscheck
 if [[ $algedaanvidpad != "" ]]; then
