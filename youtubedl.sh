@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.7.8'
-commit='brumfix'
+version='4.7.9'
+commit='brumfix2'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -54,7 +54,7 @@ locatie () {
 			echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 			exit 1
 		fi
-		realpath --version||coreutilsnietgevonden=1
+		realpath --version &>/dev/null ||coreutilsnietgevonden=1
 		if [[ $coreutilsnietgevonden == 1 ]]; then
 			echo "essentieel component mist: coreutils, mag deze gedownload worden? Y/n"
 			while [[ $afgerond != 1 ]]; do
@@ -93,7 +93,7 @@ cleanupfiles () {
 updatecheck () {
 	[[ $(cat $(which youtubedl)|head -2|tail -1) == $(curl -s https://raw.githubusercontent.com/yabru/youtubedl/main/youtubedl.sh|head -2|tail -1) ]]||osascript -e 'display notification "Er is een nieuwe update beschickbaar run: youtubedl -U om te updaten." with title "Youtube-dl" subtitle "Github."'
 }
-help () {
+helpme () {
 	updatecheck&
 	echo ""
 	echo "youtubedl -u \"YouTube-url\" [options]"
@@ -142,7 +142,8 @@ help () {
 }
 toolscheck () {
 	for t in ${tools[@]}; do
-		FILE="/usr/local/Cellar/$t"
+		cellarpath=$(echo `which brew|sed -e "s|/bin/brew||"`/Cellar)
+		FILE="$cellarpath/$t"
 		echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	done
 	installeeraplicaties=`cat ~/Documents/youtube-dl/.nietgeinstalleerd.list| sed -e "/^$/d"`
@@ -210,9 +211,12 @@ install () {
 		ietsgedaan=1
 	fi
 	for t in ${tools[@]}; do
-		FILE="/usr/local/Cellar/$t"
-		echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
+	brew list "$t" &>/dev/null ||echo $t
+	#	which "$t" &>/dev/null||echo $t
+	#	FILE="/usr/local/Cellar/$t"
+	#	echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	done
+	exit
 	touch ~/Documents/youtube-dl/.gedaan
 	sleep .3
 	rm ~/Documents/youtube-dl/.gedaan
@@ -628,7 +632,7 @@ do
 	case "${flag}" in
 	u)			yourl=${OPTARG};;
 
-	h)			help;;
+	h)			helpme;;
 
 	a)			vofa=a;;
 
@@ -742,7 +746,7 @@ if [[ $anderefile == "" ]]; then
 		if [[ $instaurl == "vid" ]];then geengoedeurl=1 ;fi
 		if [[ $geengoedeurl == 1 ]]||[[ $image == 0 ]]; then
 				toegang="0"
-				help
+				helpme
 		fi
 	fi
 fi
@@ -804,7 +808,7 @@ if [[ $yourltweedelinkcheck != "" ]]; then
 fi
 if [[ $yourl == *"youtube.com/playlist"* ]]; then
 	if [[ $vofa == a ]]; then
-		yourl=`/usr/local/bin/youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
+		yourl=`youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
 		yourl="`echo $yourl|rev|sed -e "s/\\\\\\//"|rev`"
 		echo "`which youtubedl` -au $yourl" > ~/Documents/youtube-dl/.$random-script.sh
 		chmod 755 ~/Documents/youtube-dl/.$random-script.sh
@@ -812,14 +816,14 @@ if [[ $yourl == *"youtube.com/playlist"* ]]; then
 		bash ~/Documents/youtube-dl/.$random-script.sh
 		exit
 	else
-		command="youtubedl -u `/usr/local/bin/youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
+		command="youtubedl -u `youtube-dl "$yourl" --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`"
 		command=`echo $command|rev|sed -e "s/\\\\\\//"|rev`
 	fi
 	command="$command ; exit"
 fi
 if [[ $image == 1 ]]; then
 	if [[ $instaurl == "" ]]; then
-		filenaam=`/usr/local/bin/youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
+		filenaam=`youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
 		filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
 		troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
 		wget -O "$troll" `youtube-dl $yourl --get-thumbnail --no-check-certificate 2> /dev/null` &> /dev/null
@@ -915,9 +919,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					trap
 					#--embed-thumbnail
 					if [[ $wgetgingfout == 1 ]]; then
-						/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+						youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 					else
-						/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+						youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 						eyeD3 --add-image "/Users/$USER/Documents/youtube-dl/outfile.jpg:FRONT_COVER" "$filenaamverbeterd" &>/dev/null
 						rm ~/Documents/youtube-dl/outfile.jpg
 					fi
@@ -2022,7 +2026,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		trap
 		trap exit 1 SIGINT
 		while [[ $gehaald != 1 ]];do
-			/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
+			youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
 			if [[ $gehaald != 1 ]]; then
 				youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"	
 			fi
@@ -2074,29 +2078,29 @@ if [[ $yourltweedelinkcheck == "1" ]]; then
 	if [[ $minr == 1 ]]; then
 		if [[ $open == 1 ]]; then
 			if [[ $vofa == "v" ]]; then
-				/usr/local/bin/youtubedl -rou "$allelinksbehalvedeeerste"
+				youtubedl -rou "$allelinksbehalvedeeerste"
 			else
-				/usr/local/bin/youtubedl -raou "$allelinksbehalvedeeerste"
+				youtubedl -raou "$allelinksbehalvedeeerste"
 			fi
 		else
 			if [[ $vofa == "v" ]]; then
-				/usr/local/bin/youtubedl -ru "$allelinksbehalvedeeerste"
+				youtubedl -ru "$allelinksbehalvedeeerste"
 			else
-				/usr/local/bin/youtubedl -rau "$allelinksbehalvedeeerste"
+				youtubedl -rau "$allelinksbehalvedeeerste"
 			fi
 		fi
 	else
 		if [[ $open == 1 ]]; then
 			if [[ $vofa == "v" ]]; then
-				/usr/local/bin/youtubedl -ou "$allelinksbehalvedeeerste"
+				youtubedl -ou "$allelinksbehalvedeeerste"
 			else
-				/usr/local/bin/youtubedl -aou "$allelinksbehalvedeeerste"
+				youtubedl -aou "$allelinksbehalvedeeerste"
 			fi
 		else
 			if [[ $vofa == "v" ]]; then
-				/usr/local/bin/youtubedl -u "$allelinksbehalvedeeerste"
+				youtubedl -u "$allelinksbehalvedeeerste"
 			else
-				/usr/local/bin/youtubedl -au "$allelinksbehalvedeeerste"
+				youtubedl -au "$allelinksbehalvedeeerste"
 			fi
 		fi
 	fi
