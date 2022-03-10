@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.1'
-commit='brumfix4'
+version='4.8.2'
+commit='brumfix5'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -215,7 +215,6 @@ install () {
 		FILE="$cellarpath/$t"
 	#	echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	done
-	exit
 	touch ~/Documents/youtube-dl/.gedaan
 	sleep .3
 	rm ~/Documents/youtube-dl/.gedaan
