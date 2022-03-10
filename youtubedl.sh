@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.7.9'
-commit='brumfix2'
+version='4.8.0'
+commit='brumfix3'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -211,9 +211,8 @@ install () {
 		ietsgedaan=1
 	fi
 	for t in ${tools[@]}; do
-	brew list "$t" &>/dev/null ||echo $t
-	#	which "$t" &>/dev/null||echo $t
-	#	FILE="/usr/local/Cellar/$t"
+		cellarpath=$(echo `which brew|sed -e "s|/bin/brew||"`/Cellar)
+		FILE="$cellarpath/$t"
 	#	echo `ls $FILE &> /dev/null || echo "$t"` >> ~/Documents/youtube-dl/.nietgeinstalleerd.list
 	done
 	exit
