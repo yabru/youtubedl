@@ -1,7 +1,7 @@
 #!/bin/bash
-version='4.8.3'
-commit='brumfix6'
-tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
+version='4.8.4'
+commit='brumfix 7'
+tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
 random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
