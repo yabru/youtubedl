@@ -1,10 +1,11 @@
 #!/bin/bash
-version='4.8.2'
-commit='brumfix5'
+version='4.8.3'
+commit='brumfix6'
 tools=(AtomicParsley curl python@3.9 ffmpeg libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
 random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
+brewbin=$(echo `which brew|sed -e "s|/brew||"`)
 #gshufiserniet=`gshuf --version &> /dev/null&&echo "1"`
 #if  [[ $gshufiserniet == "1" ]]; then
 #	entries=($(gshuf -i 0-149 -n 15 | sort -n))
@@ -46,7 +47,7 @@ locatie () {
 		if [[ $locatieCheck == "1" ]]; then
 			rm /usr/local/bin/youtubedl
 		fi
-		which brew &> /dev/null|| ls /usr/local/bin/brew &> /dev/null||brewiserniet=1
+		which brew &> /dev/null||brewiserniet=1
 		if [[ $brewiserniet == 1 ]]; then
 			echo "je hebt HomeBrew niet geinstalleerd, Dit is esentieel voor youtubedl om te functioneren."
 			echo ""
@@ -806,7 +807,7 @@ if [[ $yourltweedelinkcheck != "" ]]; then
 fi
 if [[ $yourl == *"youtube.com/playlist"* ]]; then
 	if [[ $vofa == a ]]; then
-		yourl=`youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
+		yourl=`$brewbin/youtube-dl "$yourl" --playlist-reverse --flat-playlist -i --get-filename -o "https://www.youtube.com/watch?v=%(id)s"|awk 1 ORS="\\\\\\ "`
 		yourl="`echo $yourl|rev|sed -e "s/\\\\\\//"|rev`"
 		echo "`which youtubedl` -au $yourl" > ~/Documents/youtube-dl/.$random-script.sh
 		chmod 755 ~/Documents/youtube-dl/.$random-script.sh
@@ -824,7 +825,7 @@ if [[ $image == 1 ]]; then
 		filenaam=`youtube-dl $yourl -x --get-filename 2> /dev/null |sed -e "s/ /$random/g"`
 		filenaamZonderExtentie=/Users/$USER/Downloads/`basename $filenaam|rev| cut -d'.' -f 2-|rev`.jpg
 		troll=`echo $filenaamZonderExtentie|sed -e "s/$random/ /g"`
-		wget -O "$troll" `youtube-dl $yourl --get-thumbnail --no-check-certificate 2> /dev/null` &> /dev/null
+		wget -O "$troll" `$brewbin/youtube-dl $yourl --get-thumbnail --no-check-certificate 2> /dev/null` &> /dev/null
 		exit
 	else
 		vofa=a
@@ -844,7 +845,7 @@ if [[ $anderefile == "" ]]; then
 			specialetoegang=1
 		fi
 	else
-		alleytinfo=`/usr/local/bin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
+		alleytinfo=`$brewbin/youtube-dl $yourl --get-title --get-filename --output "~/Documents/youtube-dl/%(uploader)s$random2%(title)s.%(ext)s$random2%(upload_date)s" 2>/dev/null|awk 1 ORS="$random"`
 		titel=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $1}'`
 		filenaamvooracc=`echo $alleytinfo|awk 'BEGIN {FS="'$random'"}{print $2}'`
 		#filenaamvooracc=`echo "/Users/$USER/Documents/youtube-dl/"``echo $alleytinfo|awk 'BEGIN {FS="'/Users/$USER/Documents/youtube-dl/'"}{print $2}'`
@@ -917,9 +918,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					trap
 					#--embed-thumbnail
 					if [[ $wgetgingfout == 1 ]]; then
-						youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+						$brewbin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 					else
-						youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
+						$brewbin/youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 						eyeD3 --add-image "/Users/$USER/Documents/youtube-dl/outfile.jpg:FRONT_COVER" "$filenaamverbeterd" &>/dev/null
 						rm ~/Documents/youtube-dl/outfile.jpg
 					fi
@@ -1530,11 +1531,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		if [[ $instaurl != "" ]]; then
 			if [[ $image == 0 ]]; then	
 				if [[ $instaurl == "vid" ]]; then
-					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+					wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
 				else
 					typeurl=`echo $instaurl|sed -e "s|https://||"`
 					if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
-						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
+						wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $instaurl` &> /dev/null
 					else
 						if [[ $typeurl == "www.instagram.com"* ]]; then
 							instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
@@ -1550,7 +1551,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 								else
 									if [[ $yourl != "" ]]; then
 										echo "File type niet ondersteund, eigen video wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+										wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
 									else
 										exit 1
 									fi
@@ -1572,7 +1573,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 								if [[ $fotokeuze == 2 ]]; then
 									if [[ $yourl != "" ]]; then
 										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+										wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
 									fi		
 								fi
 							fi
@@ -1632,11 +1633,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			else
 				#########################
 				if [[ $instaurl == "vid" ]]; then
-					wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl 2>/dev/null` &> /dev/null
+					wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl 2>/dev/null` &> /dev/null
 				else
 					typeurl=`echo $instaurl|sed -e "s|https://||"`
 					if [[ $typeurl == "youtu.be"* ]]||[[ $typeurl == "www.youtube.com"* ]]; then
-						wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $instaurl` &> /dev/null
+						wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $instaurl` &> /dev/null
 					else
 						if [[ $typeurl == "www.instagram.com"* ]]; then
 							instalooter -T outfile post $instaurl ~/Documents/youtube-dl&>/dev/null
@@ -1652,7 +1653,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 								else
 									if [[ $yourl != "" ]]; then
 										echo "File type niet ondersteund, eigen video wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+										wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
 									else
 										exit 1
 									fi
@@ -1674,7 +1675,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 								if [[ $fotokeuze == 2 ]]; then
 									if [[ $yourl != "" ]]; then
 										echo "er ging iets mis met het downloaden van de foto, eigen thumbnail wordt gebruikt"
-										wget -O ~/Documents/youtube-dl/outfile.jpg `youtube-dl --get-thumbnail $yourl` &> /dev/null
+										wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
 									else
 										exit 1
 									fi
@@ -1976,7 +1977,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 #			echo ""
 #			echo -ne "\r"
 #		fi
-		youtube-dl $yourl --write-sub --convert-subs srt --skip-download -o $random &>/dev/null
+		$brewbin/youtube-dl $yourl --write-sub --convert-subs srt --skip-download -o $random &>/dev/null
 		ls "$random"* &>/dev/null&&subsgeslaagd=1
 		if [[ $subsgeslaagd == 1 ]]; then
 			mv "$random"* ~/Documents/youtube-dl/lyrics.txt
@@ -2024,9 +2025,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		trap
 		trap exit 1 SIGINT
 		while [[ $gehaald != 1 ]];do
-			youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
+			$brewbin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
 			if [[ $gehaald != 1 ]]; then
-				youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"	
+				$brewbin/youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"	
 			fi
 		done
 		#if [[ $filenaamverbeterd != *".mp4" ]]; then
