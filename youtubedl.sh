@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.4'
-commit='brumfix 7'
+version='4.8.5'
+commit='kleine update'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1228,10 +1228,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		if [[ $seperator != "" ]]; then
 			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="'$seperator'"}{print $1}'`
 		fi
-		if [[ $liedtitelzonderprod == "#"* ]]; then
-			hoeveelx=`echo $liedtitelzonderprod| awk -F"#" '{print NF-1}'`
-			liedtitelzonderprod=`echo "$liedtitelzonderprod"|rev|awk 'BEGIN {FS="#"}{print $"'$hoeveelx'"}'|rev` #voor als iemand ook nog een ander hekje heeft die we niet moeten hebben
-			liedtitelzonderprod=`echo "#$liedtitelzonderprod"`
+		if ! [[ $liedtitelzonderprod == "#"* ]]; then #if [[ $liedtitelzonderprod == "#"* ]]; then
+			liedtitelzonderprod=`echo $liedtitelzonderprod|awk 'BEGIN {FS="#"}{print $1}'`
+		#	hoeveelx=`echo $liedtitelzonderprod| awk -F"#" '{print NF-1}'`
+		#	liedtitelzonderprod=`echo "$liedtitelzonderprod"|rev|awk 'BEGIN {FS="#"}{print $"'$hoeveelx'"}'|rev` #voor als iemand ook nog een ander hekje heeft die we niet moeten hebben
+		#	liedtitelzonderprod=`echo "#$liedtitelzonderprod"`
 		fi
 		if [[ $liedtitelzonderprod == "\""* ]]; then
 			dubbelequotatiecheck=1
@@ -1901,7 +1902,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				fi
 			else
 				if [[ $fadeinsec != "c" ]]; then
-					echo "fadeinsec is niet c">>tijdlijkkkk.txt;open tijdlijkkkk.txt
+					#echo "fadeinsec is niet c">>tijdlijkkkk.txt;open tijdlijkkkk.txt
 					fadeinsec=0
 				fi
 			fi
@@ -1923,7 +1924,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
 					if [[ $fadeinsec != 0 ]]; then
 						if [[ $fadeinsec == "c" ]]; then
-							echo "ffmpeg wordt geactiveerd!">>tijdlijkkkk.txt;open tijdlijkkkk.txt
+							#echo "ffmpeg wordt geactiveerd!">>tijdlijkkkk.txt;open tijdlijkkkk.txt
 							#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
