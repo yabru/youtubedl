@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.5'
-commit='kleine update'
+version='4.8.6'
+commit='Hoofdletter Syntax toegevoegd'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1517,6 +1517,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			verbeterdartiest=`echo "$verbeterdartiest"|sed -e "s/  / /g"`
 		done
 		if [[ $image == 0 ]]; then
+			liedtitelzonderprod=$(echo "$liedtitelzonderprod"|gsed -e "s/\b\(.\)/\u\1/g")
+			account=$(echo "$account" | gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g")
+			verbeterdartiest=$(echo "$verbeterdartiest" | gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g")
 			if [[ $prodintitel == "1" ]]; then
 				engeneer=`echo $engeneer|sed -e "s/^@//"`
 				engeneer=`echo "$engeneer"|sed -e "s/, / x /g"`
@@ -1785,7 +1788,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		audio aan het bijsnijden   "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 				mv "$filenaamverbeterd" ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 				avconv -i ~/Documents/youtube-dl/outfile.mp3 -t "$eindesec" -c copy "$filenaamverbeterd" &> /dev/null
-				
 				if [[ $fadeoutsec != 0 ]]; then
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					sox "$filenaamverbeterd" ~/Documents/youtube-dl/outputfade.mp3 fade h 0 -0 "$fadeoutsec" &> /dev/null 
@@ -2026,7 +2028,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		trap
 		trap exit 1 SIGINT
 		while [[ $gehaald != 1 ]];do
-			$brewbin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
+			$brewbin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4 --add --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"&&gehaald=1
 			if [[ $gehaald != 1 ]]; then
 				$brewbin/youtube-dl --rm-cache-dir #/usr/local/bin/youtube-dl $yourl --output "$filenaamverbeterd" --merge-output-format mp4 --embed-thumbnail --all-subs --embed-subs -f bestvideo+bestaudio --add-metadata --metadata-from-title "(?P<artist>.+?) - (?P<title>.+)"	
 			fi
