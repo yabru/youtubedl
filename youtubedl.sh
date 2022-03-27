@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.6'
-commit='Hoofdletter Syntax toegevoegd'
+version='4.8.7'
+commit='-s startmin:startsec|c functie toegevoegd (begint bij een stuk en trimt de stilte weg)'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1914,7 +1914,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				if [[ $tweedelied == "" ]]; then
 					ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
 					if [[ $seconde == "c" ]]; then
-						#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 						ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
 					else
 						avconv -i "$filenaamverbeterd" -ss $seconde ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
@@ -1923,12 +1922,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					rm "$filenaamverbeterd" &> /dev/null
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 					mv ~/Documents/youtube-dl/outfile.mp3 "$filenaamverbeterd"
-					#avconv -i ~/Documents/youtube-dl/outfile.mp3 -c copy "$filenaamverbeterd" &> /dev/null
+					echo "$fadeinsec" >> debug.log
 					if [[ $fadeinsec != 0 ]]; then
+
 						if [[ $fadeinsec == "c" ]]; then
-							#echo "ffmpeg wordt geactiveerd!">>tijdlijkkkk.txt;open tijdlijkkkk.txt
-							#ffmpeg -i "$filenaamverbeterd" -af silenceremove=1:0:-50dB ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
-							ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/outfile.mp3 &> /dev/null
+							ffmpeg -i "$filenaamverbeterd" -af silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,areverse ~/Documents/youtube-dl/tijdelijk.mp3 &> /dev/null
 							mv ~/Documents/youtube-dl/tijdelijk.mp3 "$filenaamverbeterd"  &> /dev/null
 						else
 							ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
