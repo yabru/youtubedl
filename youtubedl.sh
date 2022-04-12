@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.7'
-commit='-s startmin:startsec|c functie toegevoegd (begint bij een stuk en trimt de stilte weg)'
+version='4.8.8'
+commit='Thumbnail generatie verbeterd  kleine dingen'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -14,7 +14,7 @@ brewbin=$(echo `which brew|sed -e "s|/brew||"`)
 toegang="0"
 vofa=v
 image="0"
-verdonkeringspercentage=
+verdonkeringspercentage=10
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
 fi
@@ -626,7 +626,7 @@ mind () {
 	fi
 	exit 0
 }
-while getopts u:haridfobs:e:t:UTm:g:vy:p:F:S flag;
+while getopts u:haridfobs:e:t:UTm:g:vy:p:F:SD flag;
 do
 	case "${flag}" in
 	u)			yourl=${OPTARG};;
@@ -673,6 +673,8 @@ do
 	v)			versioncheck=1;;
 
 	p)			volumepc=${OPTARG};;
+
+	D)			DL=1;;
 
 	F)			anderefile=${OPTARG};;
 
@@ -1598,21 +1600,35 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				for f in ${lijst2[@]}; do
 					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s%$f % %"`
 				done
-				if [[ $manueelinput == "" ]]; then
-					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				if [[ $DL == 1 ]]; then
+					if [[ $manueelinput == "" ]]; then
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+					else
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+					fi
+					if [[ $manueelinput == *"|||*" ]]; then
+						verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}' #|tr [:lower:] [:upper:]`
+						liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev #|tr [:lower:] [:upper:]`
+					fi
 				else
-					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-					verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-				fi
-				if [[ $manueelinput == *"|||*" ]]; then
-					verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'`
-					liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev`
+					if [[ $manueelinput == "" ]]; then
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					else
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					fi
+					if [[ $manueelinput == *"|||*" ]]; then
+						verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}' #|tr [:lower:] [:upper:]`
+						liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev #|tr [:lower:] [:upper:]`
+					fi
 				fi
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
-					#1280x720
+					
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $caractertitel -gt 17 ]]; then
 						huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
@@ -1620,7 +1636,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					else
 						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x8 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/file.jpg &> /dev/null
+					if [[ $DL == 1 ]]; then
+						convert -font Speeday-Bold -paint 1 -fill black -stroke firebrick3 -strokewidth 9 -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 120 -gravity center -draw "text 0,100 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					else
+						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					fi
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
@@ -1702,16 +1722,30 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				for f in ${lijst2[@]}; do
 					artiesttitelzondergroep=`echo $artiesttitelzondergroep|sed -e "s%$f % %"`
 				done
-				if [[ $manueelinput == "" ]]; then
-					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-					verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+				if [[ $DL == 1 ]]; then
+					if [[ $manueelinput == "" ]]; then
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+					else
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+					fi
+					if [[ $manueelinput == *"|||*" ]]; then
+						verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}' #|tr [:lower:] [:upper:]`
+						liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev #|tr [:lower:] [:upper:]`
+					fi
 				else
-					liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-					verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-				fi
-				if [[ $manueelinput == *"|||*" ]]; then
-					verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}'|tr [:lower:] [:upper:]`
-					liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev|tr [:lower:] [:upper:]`
+					if [[ $manueelinput == "" ]]; then
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					else
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+					fi
+					if [[ $manueelinput == *"|||*" ]]; then
+						verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}' #|tr [:lower:] [:upper:]`
+						liedtitelzonderprodh=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $2}'|rev|sed -e 's/*|||//'|rev #|tr [:lower:] [:upper:]`
+					fi
 				fi
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
@@ -1723,7 +1757,18 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					else
 						titelvergrotingsfactor=235
 					fi
-					convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					caracterartiest=`echo $verbeterdartiest|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
+					if [[ $caracterartiest -gt 28 ]]; then
+						huidigantwoord=`bc <<< "scale=2; 100/$caracterartiest*28"`
+						artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*115"`
+					else
+						artiestvergrotingsfactor=120
+					fi
+					if [[ $DL == 1 ]]; then #155, 35, 37
+						convert -font Speeday-Bold -paint 1 -fill black -stroke firebrick3 -strokewidth 12 -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					else
+						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+					fi
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
@@ -1982,22 +2027,28 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		ls "$random"* &>/dev/null&&subsgeslaagd=1
 		if [[ $subsgeslaagd == 1 ]]; then
 			mv "$random"* ~/Documents/youtube-dl/lyrics.txt
+			lang=`cat ~/Documents/youtube-dl/lyrics.txt|head -3 |tail -1|sed -e "s/Language: //"`
 			gsed -i "s/.* --> .*//g" ~/Documents/youtube-dl/lyrics.txt
 			gsed -i '/^[[:space:]]*$/d' ~/Documents/youtube-dl/lyrics.txt
 			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
 			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
 			gsed -i '1d' ~/Documents/youtube-dl/lyrics.txt
 			gsed -i "s/^.*$/&\n/" ~/Documents/youtube-dl/lyrics.txt
+			while `cat ~/Documents/youtube-dl/lyrics.txt|grep "^ " &>/dev/null`;do
+				gsed -i "s/^ //g" ~/Documents/youtube-dl/lyrics.txt
+			done
 			if [[ `cat ~/Documents/youtube-dl/lyrics.txt|wc -c|tr -d [:space:]` -lt 5000 ]];then
-				echo "wil je vertalen?"
-				read vertalen
-				if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
-					#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
-					text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src en -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
-					rm ~/Documents/youtube-dl/lyrics.txt
-					mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
+				if [[ $lang != "nl" ]]; then
+					echo "$(echo $lang|tr [:lower:] [:upper:]) ondertiteling gedetecteerd."
+					echo "wil je vertalen naar NL? Y/n"				
+					read vertalen
+					if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
+						#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
+						text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src $lang -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
+						rm ~/Documents/youtube-dl/lyrics.txt
+						mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
+					fi	
 				fi
-				#eyeD3 --encoding utf8 --add-lyrics ~/Documents/youtube-dl/lyrics.txt "$filenaamverbeterd" &>/dev/null
 			fi
 			eyeD3 --encoding "utf8" --add-lyrics "/Users/$USER/Documents/youtube-dl/lyrics.txt" "$filenaamverbeterd" 1>/dev/null
 			rm ~/Documents/youtube-dl/lyrics.txt
