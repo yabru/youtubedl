@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.8.9'
-commit='kleine update'
+version='4.9.0'
+commit='cropfit toegevoegd'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -26,6 +26,8 @@ metgrain=
 if [[ $metgrain == "" ]]; then
 	metgrain=1
 fi
+#c of f
+cropfit=f
 berekenmin () {
 	urenvoor=`echo $datevoordl|awk 'BEGIN {FS=":"}{print $1}'`
 	urenna=`echo $datenadl|awk 'BEGIN {FS=":"}{print $1}'`
@@ -548,18 +550,22 @@ osascript -e 'set iPhoneName to "'"$iPhonenaam"'"
 
 }
 fotocrop () {
-	fotopositie=`echo "$instaurl"|awk 'BEGIN {FS="|"}{print $2}'`
-	if [[ $fotopositie != "" ]]; then
-		if [[ $fotopositie == "boven" ]]; then
-			uiteindelijkepositie="north"
-		fi
-		if [[ $fotopositie == "onder" ]]; then
-			uiteindelijkepositie="south"
-		fi
+	if [[ $cropfit == "f" ]]; then
+		convert ~/Documents/youtube-dl/outfile.jpg \( -clone 0 -blur 0x100 -resize 1920x1080\! \) \( -clone 0 -resize 1920x1080 \) -delete 0 -gravity center -compose over -composite ~/Documents/youtube-dl/outfile.jpg
 	else
-		uiteindelijkepositie="center"
-	fi
-	convert -gravity $uiteindelijkepositie -crop 16:9 ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+		fotopositie=`echo "$instaurl"|awk 'BEGIN {FS="|"}{print $2}'`
+		if [[ $fotopositie != "" ]]; then
+			if [[ $fotopositie == "boven" ]]; then
+				uiteindelijkepositie="north"
+			fi
+			if [[ $fotopositie == "onder" ]]; then
+				uiteindelijkepositie="south"
+			fi
+		else
+			uiteindelijkepositie="center"
+		fi
+		convert -gravity $uiteindelijkepositie -crop 16:9 ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+	fi	
 }
 prodcleaner () {
 	n=0
@@ -1635,15 +1641,15 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				fi
 				echtgedaan=0
 				while [ $echtgedaan -lt 1 ]; do for s in / / - - \\ \\ \|; do echo -ne "\r$s		thumbnail aan het genereren      "; sleep .05;if [[ -f ~/Documents/youtube-dl/.gedaan ]]; then echtgedaan=1; fi; done;done&
-					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
-					
+					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg			
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $DL == 1 ]]; then
-						echo $caractertitel
-						if [[ $caractertitel -gt 2 ]]; then
+						if [[ $caractertitel -gt 17 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
 							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*180"`
+							strokewidth=`bc <<< "scale=2; $huidigantwoord/100*10"`
 						else
+							strokewidth=12
 							titelvergrotingsfactor=235
 						fi
 						caracterartiest=`echo $verbeterdartiest|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
@@ -1659,7 +1665,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert ~/Documents/youtube-dl/outfile2.jpg -seed 1000 -attenuate $deformlevel +noise gaussian ~/Documents/youtube-dl/outfile.jpg
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
-						convert -font Speeday-Bold -paint 1 -fill black -stroke brown -strokewidth 9 -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 120 -gravity center -draw "text 0,100 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+						convert -font Speeday-Bold -paint 1 -fill black -stroke brown -strokewidth 9 -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 120 -gravity center -draw "text 0,100 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
 					else
 						if [[ $caractertitel -gt 17 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
@@ -1667,15 +1673,15 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						else
 							titelvergrotingsfactor=235
 						fi
-						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
 					fi
 					#echo -ne "\r"
-					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+					rm ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile2.jpg &> /dev/null
 					eyeD3 --remove-all-images "$filenaamverbeterd" &> /dev/null
 					eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
 					rm ~/Documents/youtube-dl/file.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
-				sleep .
+				sleep .3
 				rm ~/Documents/youtube-dl/.gedaan
 				echo -ne "\r$(tput cuu1)$(tput dl1)"
 				echo "                                      "
@@ -1820,7 +1826,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					fi
 					#echo -ne "\r"
-					rm ~/Documents/youtube-dl/outfile.jpg &> /dev/null
+					rm ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile2.jpg &> /dev/null
 				touch ~/Documents/youtube-dl/.gedaan
 				sleep .3
 				rm ~/Documents/youtube-dl/.gedaan
