@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.1'
-commit='kleuren verbetering'
+version='4.9.2'
+commit='Blur customation'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -17,14 +17,22 @@ image="0"
 verdonkeringspercentage=10
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
-fi
+fi 
 deformlevel=
 if [[ $deformlevel == "" ]]; then
 	deformlevel=2
 fi
-metgrain=0
+metgrain=
 if [[ $metgrain == "" ]]; then
 	metgrain=1
+fi
+blur=0
+if [[ $blur == "" ]]; then
+	blur=1
+	hvlblur=
+	if [[ $hvlblur == "" ]]; then
+		hvlblur=12
+	fi
 fi
 #c of f
 cropfit=c
@@ -1558,6 +1566,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					kleur=brown
 				fi
 			fi
+			echo $blur
 			if [[ $image == 0 ]]; then	
 				if [[ $instaurl == "vid" ]]; then
 					wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
@@ -1653,9 +1662,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg			
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $DL == 1 ]]; then
-						if [[ $caractertitel -gt 17 ]]; then
-							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*180"`
+						if [[ $caractertitel -gt 13 ]]; then
+							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*13"`
+							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*215"`
 							strokewidth=`bc <<< "scale=2; $huidigantwoord/100*10"`
 						else
 							strokewidth=9
@@ -1674,8 +1683,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert ~/Documents/youtube-dl/outfile2.jpg -seed 1000 -attenuate $deformlevel +noise gaussian ~/Documents/youtube-dl/outfile.jpg
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
-						convert -font Speeday-Bold -paint 1 -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 120 -gravity center -draw "text 0,100 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
-					else
+						if [[ $blur == 1 ]]; then
+							convert -font Speeday-Bold -paint 1 -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+						else
+							convert -font Speeday-Bold -paint 1 -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+						fi					else
 						if [[ $caractertitel -gt 17 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
 							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*240"`
@@ -1795,9 +1807,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 					caractertitel=`echo $liedtitelzonderprod|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 					if [[ $DL == 1 ]]; then #155, 35, 37
-						if [[ $caractertitel -gt 17 ]]; then
-							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
-							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*180"`
+						if [[ $caractertitel -gt 13 ]]; then
+							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*13"`
+							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*215"`
 							strokewidth=`bc <<< "scale=2; $huidigantwoord/100*10"`
 						else
 							strokewidth=9
@@ -1817,7 +1829,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert ~/Documents/youtube-dl/outfile2.jpg -seed 1000 -attenuate $deformlevel +noise gaussian ~/Documents/youtube-dl/outfile.jpg
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
-						convert -font Speeday-Bold -paint 1 -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+						if [[ $blur == 1 ]]; then
+							convert -font Speeday-Bold -paint 1 -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+						else
+							convert -font Speeday-Bold -paint 1 -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+						fi
 					else
 						if [[ $caractertitel -gt 17 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
