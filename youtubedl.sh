@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.2'
-commit='Blur customation'
+version='4.9.3'
+commit='Kleine updates met muziek app die opent als hij synced en thumbnail verbeterd'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -928,8 +928,10 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				filenaamverbeterd=`echo $filenaam|rev|sed -e "s/$(echo $typ|rev)/3pm./"|rev`
 				yourlid=$(echo $yourl|sed -e "s|.*youtu.be/||")
 				yourlid=$(echo $yourlid|sed -e "s|.*/watch?v=||")
-				yourlid=$(echo $yourlid|sed -e "s|?list=.*||")
-				yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
+				yourlid=$(echo ${yourlid:0:11})
+				#yourlid=$(echo $yourlid|sed -e "s|?list=.*||")
+				#yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
+				#yourlid=$(echo $yourlid|sed -e "s|&feature=.*||")
 				#thumbnailbestemming="/Users/$USER/Documents/youtube-dl/$yourlid.jpg"
 				thumbnailbestemming="/Users/$USER/Documents/youtube-dl/outfile.jpg"
 				wget -O ~/Documents/youtube-dl/outfile.jpg https://img.youtube.com/vi/$yourlid/maxresdefault.jpg &>/dev/null||wgetgingfout=1
@@ -1566,7 +1568,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					kleur=brown
 				fi
 			fi
-			echo $blur
 			if [[ $image == 0 ]]; then	
 				if [[ $instaurl == "vid" ]]; then
 					wget -O ~/Documents/youtube-dl/outfile.jpg `$brewbin/youtube-dl --get-thumbnail $yourl` &> /dev/null
@@ -1684,9 +1685,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
 						if [[ $blur == 1 ]]; then
-							convert -font Speeday-Bold -paint 1 -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+							convert -font Speeday-Bold -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
 						else
-							convert -font Speeday-Bold -paint 1 -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+							convert -font Speeday-Bold -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
 						fi					else
 						if [[ $caractertitel -gt 17 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
@@ -1694,7 +1695,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						else
 							titelvergrotingsfactor=235
 						fi
-						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
+						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
 					fi
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile2.jpg &> /dev/null
@@ -1830,9 +1831,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
 						if [[ $blur == 1 ]]; then
-							convert -font Speeday-Bold -paint 1 -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+							convert -font Speeday-Bold -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
 						else
-							convert -font Speeday-Bold -paint 1 -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+							convert -font Speeday-Bold -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
 						fi
 					else
 						if [[ $caractertitel -gt 17 ]]; then
@@ -1848,7 +1849,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						else
 							artiestvergrotingsfactor=120
 						fi
-						convert -font Impact -paint 1 -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					fi
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile2.jpg &> /dev/null
@@ -2142,6 +2143,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		#	add newFile to playlist toPlaylist
 		#	end tell'&>/dev/null;fi #;echo "/Users/"$USER"/Documents/youtube-dl/$f"
 		#done
+		ps -ef|grep '/S[y]stem/Applications/Music.app/Contents/MacOS/Music' &> /dev/null ||open -a Music.app
 		osascript -e 'tell application "Music"
 		set newFile to "'"/Users/$USER/Documents/youtube-dl/`ls -t Documents/youtube-dl/|head -1`"'"
 		set toPlaylist to "Library"
