@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.3'
-commit='Kleine updates met muziek app die opent als hij synced en thumbnail verbeterd'
+version='4.9.4'
+commit='Automatish converteren van non mp3 containers'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -909,6 +909,12 @@ if [[ $anderefile == "" ]]; then
 	fi
 else
 	ls "$anderefile"&>/dev/null&&toegang=1
+	fileextentie=$(echo $anderefile|rev|awk 'BEGIN {FS="."}{print $1}'|rev)
+	fileextentiemp3=$(echo $anderefile|rev|sed -e "s/$(echo $fileextentie|rev)/3pm/"|rev)
+	if [[ $fileextentie != "mp3" ]]; then
+		ffmpeg -i "$anderefile" "$fileextentiemp3" &>/dev/null
+		anderefile=$fileextentiemp3
+	fi
 	titel=`ls "$anderefile"|sed -e "s|.*/||"`
 	account="file"
 fi
@@ -929,6 +935,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				yourlid=$(echo $yourl|sed -e "s|.*youtu.be/||")
 				yourlid=$(echo $yourlid|sed -e "s|.*/watch?v=||")
 				yourlid=$(echo ${yourlid:0:11})
+				echo $yourl
 				#yourlid=$(echo $yourlid|sed -e "s|?list=.*||")
 				#yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
 				#yourlid=$(echo $yourlid|sed -e "s|&feature=.*||")
@@ -947,8 +954,10 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						$brewbin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
 					else
 						$brewbin/youtube-dl $yourl -x --audio-format mp3 --audio-quality 0 --output "$filenaam" -f bestaudio&&goedgegaan=1
-						eyeD3 --add-image "/Users/$USER/Documents/youtube-dl/outfile.jpg:FRONT_COVER" "$filenaamverbeterd" &>/dev/null
-						rm ~/Documents/youtube-dl/outfile.jpg
+						if [[ $goedgegaan == 1 ]]; then
+							eyeD3 --add-image "/Users/$USER/Documents/youtube-dl/outfile.jpg:FRONT_COVER" "$filenaamverbeterd" &>/dev/null
+							rm ~/Documents/youtube-dl/outfile.jpg
+						fi
 					fi
 					if [[ $goedgegaan == 1 ]]; then
 						break
@@ -970,6 +979,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 		fi
 		#/usr/local/bin/youtube-dl $yourl -x --audio-format mp3 --embed-thumbnail --audio-quality 0 --output "$filenaam" -f bestaudio||echo "opniew proberen? (Y/n)"; read opniewproberen; if [[ $opniewproberen == "" ]]||[[ $opniewproberen == "y" ]]||[[ $opniewproberen == "Y" ]]; then youtubedl "$@";else exit; fi #&sleep 2;echo -ne "\r"`du -s "$filenaam.part"|awk 'BEGIN {FS="	"}{print $1}'`;echo -ne "\r"; exit #||youtube-dl --rm-cache-dir
 		trap exit SIGINT
+		if [[ $account == *" - Topic" ]]; then
+			titel="$(echo $account|sed -e "s/ - Topic$//") - $titel"
+		fi
 		if [[ $manueelinput != "" ]]; then
 			titel=$manueelinput
 		fi
@@ -1674,9 +1686,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						caracterartiest=`echo $verbeterdartiest|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 						if [[ $caracterartiest -gt 28 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caracterartiest*28"`
-							artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*115"`
+							artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*105"`
 						else
-							artiestvergrotingsfactor=120
+							artiestvergrotingsfactor=110
 						fi
 						if [[ $metgrain == 1 ]]; then
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 720 ~/Documents/youtube-dl/outfile.jpg
@@ -1819,9 +1831,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						caracterartiest=`echo $verbeterdartiest|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 						if [[ $caracterartiest -gt 28 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caracterartiest*28"`
-							artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*115"`
+							artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*105"`
 						else
-							artiestvergrotingsfactor=120
+							artiestvergrotingsfactor=110
 						fi
 						#convert /Users/david/tesssttt.jpg  \( -clone 0 -blur 0x100 -resize 1920x1080\! \) \( -clone 0 -resize 1920x1080 \) -delete 0 -gravity center -compose over -composite result.png
 						if [[ $metgrain == 1 ]]; then
@@ -1845,9 +1857,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						caracterartiest=`echo $verbeterdartiest|iconv -c -f utf8 -t ascii|wc -c|tr -d [:blank:]`
 						if [[ $caracterartiest -gt 28 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caracterartiest*28"`
-							artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*115"`
+							artiestvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*105"`
 						else
-							artiestvergrotingsfactor=120
+							artiestvergrotingsfactor=110
 						fi
 						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					fi
