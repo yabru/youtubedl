@@ -1,7 +1,7 @@
 #!/bin/bash
-version='4.9.5'
-commit='test'
-tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid mc)
+version='4.9.6'
+commit='gefixt'
+tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
 random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
@@ -17,7 +17,7 @@ image="0"
 verdonkeringspercentage=10
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
-fi 
+fi
 deformlevel=
 if [[ $deformlevel == "" ]]; then
 	deformlevel=2
