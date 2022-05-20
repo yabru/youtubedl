@@ -1,7 +1,7 @@
 #!/bin/bash
-version='4.9.4'
-commit='Automatish converteren van non mp3 containers'
-tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
+version='4.9.5'
+commit='test'
+tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid mc)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
 random=`echo "$RANDOM$RANDOM$RANDOM$RANDOM$RANDOM"`
@@ -935,7 +935,6 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				yourlid=$(echo $yourl|sed -e "s|.*youtu.be/||")
 				yourlid=$(echo $yourlid|sed -e "s|.*/watch?v=||")
 				yourlid=$(echo ${yourlid:0:11})
-				echo $yourl
 				#yourlid=$(echo $yourlid|sed -e "s|?list=.*||")
 				#yourlid=$(echo $yourlid|sed -e "s|&list=.*||")
 				#yourlid=$(echo $yourlid|sed -e "s|&feature=.*||")
