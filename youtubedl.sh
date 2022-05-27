@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.6'
-commit='gefixt'
+version='4.9.7'
+commit='image attacht bugfix'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -14,7 +14,7 @@ brewbin=$(echo `which brew|sed -e "s|/brew||"`)
 toegang="0"
 vofa=v
 image="0"
-verdonkeringspercentage=10
+verdonkeringspercentage=
 if [[ $verdonkeringspercentage == "" ]]; then
 	verdonkeringspercentage=40
 fi
@@ -1696,17 +1696,18 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
 						if [[ $blur == 1 ]]; then
-							convert -font Speeday-Bold -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
+							convert -font Speeday-Bold -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/file.jpg &> /dev/null					
 						else
-							convert -font Speeday-Bold -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null					
-						fi					else
+							convert -font Speeday-Bold -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/file.jpg &> /dev/null					
+						fi	
+					else				
 						if [[ $caractertitel -gt 17 ]]; then
 							huidigantwoord=`bc <<< "scale=2; 100/$caractertitel*17"`
 							titelvergrotingsfactor=`bc <<< "scale=2; $huidigantwoord/100*240"`
 						else
 							titelvergrotingsfactor=235
 						fi
-						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
+						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x5 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,80 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null
 					fi
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile2.jpg &> /dev/null
@@ -1860,7 +1861,7 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 						else
 							artiestvergrotingsfactor=110
 						fi
-						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x12 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
+						convert -font Impact -fill black -colorize $verdonkeringspercentage% -blur 0x5 -fill white -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize 98 -gravity center -draw "text 0,90 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/outfile.jpg &> /dev/null
 					fi
 					#echo -ne "\r"
 					rm ~/Documents/youtube-dl/outfile.jpg ~/Documents/youtube-dl/outfile2.jpg &> /dev/null
