@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.7'
-commit='image attacht bugfix'
+version='4.9.8'
+commit='tijdduration fix (ffmpeg 192b)'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -2112,6 +2112,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 			echo "Audio bijgesneden."
 			eenwhileloopgebeurt=1
 		fi
+		ffmpeg -i "$filenaamverbeterd" ~/Documents/youtube-dl/file.jpg &> /dev/null
+		ffmpeg -i "$filenaamverbeterd" -vn -sn -c:a mp3 -ab 192k "$filenaamverbeterd.mp3" &> /dev/null
+		mv "$filenaamverbeterd.mp3" "$filenaamverbeterd"
+		eyeD3 --add-image="/Users/$USER/Documents/youtube-dl/file.jpg":FRONT_COVER "$filenaamverbeterd" &> /dev/null
+		rm 	"/Users/$USER/Documents/youtube-dl/file.jpg"
 #		if [[ $eenwhileloopgebeurt == 1 ]]; then
 #			sleep .3
 #			echo ""
@@ -2137,8 +2142,10 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					echo "wil je vertalen naar NL? Y/n"				
 					read vertalen
 					if [[ $vertalen == "y" ]]||[[ $vertalen == "Y" ]]||[[ $vertalen == "" ]]; then
+						lang=$(echo "$lang"|sed -e "s/-.*//")
 						#trans :nl file://~/Documents/youtube-dl/lyrics.txt -o nltrans.txt -no-auto
-						text=`cat ~/Documents/youtube-dl/lyrics.txt`;deep-translator translate -src $lang -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
+						text=`cat ~/Documents/youtube-dl/lyrics.txt`
+						deep-translator translate -src $lang -tgt nl -txt "$text"|tail -n +3|sed -e "s/^ //" > nltrans.txt
 						rm ~/Documents/youtube-dl/lyrics.txt
 						mv nltrans.txt ~/Documents/youtube-dl/lyrics.txt	
 					fi	
