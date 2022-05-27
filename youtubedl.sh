@@ -1,6 +1,6 @@
 #!/bin/bash
 version='4.9.8'
-commit='tijdduration fix (ffmpeg 192b)'
+commit='tijdduration fix (ffmpeg 192k)'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
