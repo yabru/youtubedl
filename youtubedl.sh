@@ -1,6 +1,6 @@
 #!/bin/bash
-version='4.9.8'
-commit='tijdduration fix (ffmpeg 192k)'
+version='4.9.9'
+commit='bestand locaties hersteld'
 tools=(AtomicParsley curl python@3.9 ffmpeg wget libav exiftool gnu-sed eye-d3 coreutils youtube-dl sox imagemagick instalooter git faac lame xvid)
 toolsverbeterd=`echo ${tools[*]}|tr '[:upper:]' '[:lower:]'`
 tools=($toolsverbeterd)
@@ -1646,8 +1646,8 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 				done
 				if [[ $DL == 1 ]]; then
 					if [[ $manueelinput == "" ]]; then
-						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
-						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"|sed -e "s/  / /g"|sed -e "s/^ //g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"|sed -e "s/  / /g"|sed -e "s/^ //g"`
 					else
 						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
 						verbeterdartiesth=`echo "$artiesttitelzondergroep"|gsed -e "s/\b\(.\)/\u\1/g"|sed -e "s/ X / x /g"|sed -e "s%\'%\\\\\\\'%g"`
@@ -1658,11 +1658,11 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 					fi
 				else
 					if [[ $manueelinput == "" ]]; then
-						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"|sed -e "s/  / /g"|sed -e "s/^ //g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|iconv -c -f utf8 -t ascii|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"|sed -e "s/  / /g"|sed -e "s/^ //g"`
 					else
-						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
-						verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"`
+						liedtitelzonderprodh=`echo "$liedtitelzonderprod"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"|sed -e "s/  / /g"|sed -e "s/^ //g"`
+						verbeterdartiesth=`echo "$artiesttitelzondergroep"|tr '[:lower:]' '[:upper:]'|sed -e "s%\'%\\\\\\\'%g"|sed -e "s/  / /g"|sed -e "s/^ //g"`
 					fi
 					if [[ $manueelinput == *"|||*" ]]; then
 						verbeterdartiesth=`echo "$titel"|awk 'BEGIN {FS="'"$liedseperator"'"}{print $1}' #|tr [:lower:] [:upper:]`
@@ -1696,9 +1696,9 @@ if [[ "$toegang" == "1" ]]; then #hier controleer je of hij uberhoubt goed een f
 							convert -density 72 -units PixelsPerInch ~/Documents/youtube-dl/outfile.jpg -resize 1920x1080 ~/Documents/youtube-dl/outfile.jpg
 						fi
 						if [[ $blur == 1 ]]; then
-							convert -font Speeday-Bold -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/file.jpg &> /dev/null					
+							convert -font Speeday-Bold -blur "0x$hvlblur" -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null					
 						else
-							convert -font Speeday-Bold -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Downloads/file.jpg &> /dev/null					
+							convert -font Speeday-Bold -fill black -stroke $kleur -strokewidth $strokewidth -colorize $verdonkeringspercentage% -fill black -pointsize $titelvergrotingsfactor -gravity center -draw "text 0,-70 '$liedtitelzonderprodh'" -pointsize $artiestvergrotingsfactor -gravity center -strokewidth 5 -draw "text 0,130 '$verbeterdartiesth'" ~/Documents/youtube-dl/outfile.jpg /Users/$USER/Documents/youtube-dl/file.jpg &> /dev/null					
 						fi	
 					else				
 						if [[ $caractertitel -gt 17 ]]; then
